@@ -1,66 +1,13 @@
-## Foundry
+# Disclaimer
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This open-source project is provided solely for academic research and non-commercial purposes. All code, documentation, and related materials are provided on an "as-is" basis, without any express or implied warranties regarding accuracy, completeness, usefulness, reliability, or suitability for any particular purpose. Users assume all risks associated with the use of this project, and the authors and contributors shall not be held liable for any direct or indirect damages (including, but not limited to, data loss, system failure, or business losses) arising from the use of this project or any derivative works.
 
-Foundry consists of:
+Before using this project, users should fully understand the contents of this disclaimer and carefully assess the project's applicability to their research work in accordance with relevant laws and regulations. Any disputes or legal liabilities arising from the use of this project shall not be attributed to the project authors or contributors.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+If you have any questions regarding the content of this disclaimer, please feel free to contact the project maintainers.
 
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+# Test
+```bash
+npm i
+forge test
 ```
