@@ -107,11 +107,10 @@ contract PriceHelper is IPriceHelper, Governable {
         require(oracles[priceId] != address(0), InvalidPriceId());
         
         (, int256 oraclePrice, , , ) = AggregatorV2V3Interface(oracles[priceId]).latestRoundData();
-        int256 oraclePriceE10 = adjustPricePrecision(oraclePrice, uint32(oracleDecimals[priceId]), Constant.PRICE_PRECISION);
+        price = adjustPricePrecision(oraclePrice, uint32(oracleDecimals[priceId]), Constant.PRICE_PRECISION);
+        require(price > 0, ErrorPrice(price));
 
-        if (isStablePrice[priceId]) return getStablePrice(oraclePriceE10);
-
-        return oraclePriceE10;
+        if (isStablePrice[priceId]) return getStablePrice(price);
     }
 
     function getPythPrice(bytes32 priceId) public view override returns(int256 price) {
@@ -120,6 +119,7 @@ contract PriceHelper is IPriceHelper, Governable {
 
         PythStructs.Price memory priceInfo = IPyth(pythOracle).getPriceNoOlderThan(pythFeedId, 86400);
         price = adjustPricePrecision(int256(priceInfo.price), uint32(priceInfo.expo>0?priceInfo.expo:-priceInfo.expo), Constant.PRICE_PRECISION);
+        require(price > 0, ErrorPrice(price));
         if (isStablePrice[priceId]) return getStablePrice(price);
     }
 

@@ -8,6 +8,7 @@ interface IPriceHelper {
     error InvalidAsset();
     error InvalidPythFeedId();
     error InvalidDecimals();
+    error ErrorPrice(int256 price);
 
     error PriceInactivation(int256 pythPrice, uint256 priceTime);
     error PythPriceError(int256 pythPrice, int256 oraclePrice);
