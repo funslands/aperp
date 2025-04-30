@@ -40,7 +40,7 @@ interface IMatchingEngine {
 
 
     function getStatus(bytes32 poolId) external view returns(TickStatus memory status);
-    function updateFund(bytes32 poolId, int256 amount, int256 price) external returns(bool);
+    function updateFund(bytes32 poolId, int256 amount, int256 price) external;
 
     function checkTickConfig(TickConfig[] memory config) external view returns(bool);
     function updateTickConfig(bytes32 poolId, TickConfig[] memory config) external;
