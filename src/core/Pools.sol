@@ -10,10 +10,11 @@ import "./interfaces/IInsuranceManager.sol";
 import "../staking/interfaces/IStaker.sol";
 import "../libraries/Constant.sol";
 import "../libraries/Plugin.sol";
+import "../libraries/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 
-contract Pools is IPools, Plugin {
+contract Pools is IPools, Plugin, ReentrancyGuard {
     address public markets;
     address public configManager;
     address public priceHelper;
@@ -22,7 +23,7 @@ contract Pools is IPools, Plugin {
     address public staker;
     address public WETH;
 
-    bool public paused; // pause any operations
+    bool public override paused; // pause any operations
 
     int256 public miningRewardRatio = 5e7; // 50%
     int256 public fundingCalcInterval = 900; // 15min
@@ -37,7 +38,7 @@ contract Pools is IPools, Plugin {
     // poolId => global maker position
     mapping(bytes32=> PoolStatus) public globalPosition;
 
-    // taderInfo
+    // traderInfo
     // poolId => traders position info 0: shortStatus 1: longStatus
     mapping(bytes32=> PoolStatus[2]) public poolStatus; 
     // poolId => funding fees
@@ -183,8 +184,8 @@ contract Pools is IPools, Plugin {
     function getFundInfo(bytes32 poolId) public view returns(int256 makerFund, int256 limitFund, int256 availableFund) {
         if (globalPosition[poolId].value == 0) return (0, 0, 0);
         limitFund = globalPosition[poolId].value * (Constant.BASIS_POINTS_DIVISOR-poolsConfig[poolId].reserveRatio) / Constant.BASIS_POINTS_DIVISOR;
-        int256 makerlimit = poolsConfig[poolId].makerLimit;
-        makerFund = limitFund > makerlimit ? makerlimit : limitFund;
+        int256 makerLimit = poolsConfig[poolId].makerLimit;
+        makerFund = limitFund > makerLimit ? makerLimit : limitFund;
 
         int256 multiplier = poolsConfig[poolId].multiplier;
         availableFund = globalPosition[poolId].value - (poolStatus[poolId][0].value + poolStatus[poolId][1].value) * Constant.BASIS_POINTS_DIVISOR / multiplier;
@@ -236,10 +237,10 @@ contract Pools is IPools, Plugin {
 
     /**
      * @dev add liquidity
-     * @param margin asset deimals
+     * @param margin asset decimals
      * @param amount liquidity amount: 1e20
      */
-    function addLiquidity(bytes32 poolId, address maker, int256 margin, int256 amount) public override returns(int256 addAmount) {
+    function addLiquidity(bytes32 poolId, address maker, int256 margin, int256 amount) public override nonReentrant returns(int256 addAmount) {
         PoolConfig memory poolConfig = poolsConfig[poolId];
         require(!paused, Paused());
         require(!poolConfig.addPaused, AddPaused());
@@ -283,11 +284,12 @@ contract Pools is IPools, Plugin {
         emit AddedLiquidity(maker, poolId, amount, value, margin, pi.netValue);
     }
 
-    function removeLiquidity(bytes32 poolId, int256 amount) public returns(int256 marginBalance, int256 removeAmount) {
+    function removeLiquidity(bytes32 poolId, int256 amount) public nonReentrant returns(int256 marginBalance, int256 removeAmount) {
         PoolInfo memory pi = poolInfo(poolId, true, true);
         (marginBalance, removeAmount) = settlePosition(SettleParams({
             poolId: poolId,
             maker: msg.sender,
+            liquidator: msg.sender,
             liquidated: false,
             amount: amount,
             receiver: msg.sender,
@@ -296,11 +298,12 @@ contract Pools is IPools, Plugin {
     }
 
     /// @notice This is a dangerous operation, please authorize carefully
-    function removeLiquidity(bytes32 poolId, address maker, int256 amount, address receiver) public override approved(maker) returns(int256 marginBalance, int256 removeAmount) {
+    function removeLiquidity(bytes32 poolId, address maker, int256 amount, address receiver) public override nonReentrant approved(maker) returns(int256 marginBalance, int256 removeAmount) {
         PoolInfo memory pi = poolInfo(poolId, true, true);
         (marginBalance, removeAmount) = settlePosition(SettleParams({
             poolId: poolId,
             maker: maker,
+            liquidator: msg.sender,
             liquidated: false,
             amount: amount,
             receiver: receiver,
@@ -313,24 +316,24 @@ contract Pools is IPools, Plugin {
         PoolConfig memory poolConfig = poolsConfig[poolId];
 
         // adjust decimals
-        margin = margin * Constant.PRECISION / poolConfig.precision;
+        int256 adjustMargin = margin * Constant.PRECISION / poolConfig.precision;
         require(!paused, Paused());
         require(position.amount > 0, NotPosition());
         require(
-            position.margin + margin >= position.amount,
+            position.amount >= position.margin + adjustMargin,
             ExcessiveMargin()
         );
 
         SafeERC20.safeTransferFrom(IERC20(poolConfig.asset), msg.sender, address(this), uint256(margin));
 
 
-        makerPositions[poolId][maker].margin += margin;
-        globalPosition[poolId].margin += margin;
+        makerPositions[poolId][maker].margin += adjustMargin;
+        globalPosition[poolId].margin += adjustMargin;
 
         emit AddedMargin(maker, poolId, margin);
     }
 
-    function liquidate(bytes32 poolId, address maker) public override returns(int256 marginBalance, int256 liquidateAmount) {
+    function liquidate(bytes32 poolId, address maker, address liquidator) public override nonReentrant returns(int256 marginBalance, int256 liquidateAmount) {
         require(msg.sender != maker, InvalidCall());
         PoolInfo memory pi = poolInfo(poolId, false, true);
         {
@@ -338,12 +341,17 @@ contract Pools is IPools, Plugin {
             require(liquidated, NotLiquidate());
         }
 
+        address receiver = maker;
+        if (isPlugin[msg.sender]) receiver = msg.sender;
+        else liquidator = msg.sender;
+
         (marginBalance, liquidateAmount) = settlePosition(SettleParams({
             poolId: poolId,
             maker: maker,
             liquidated: true,
+            liquidator: liquidator,
             amount: type(int256).max,
-            receiver: maker,
+            receiver: receiver,
             pi: pi
         }));
     }
@@ -352,6 +360,7 @@ contract Pools is IPools, Plugin {
         bytes32 poolId;
         address maker;
         bool liquidated;
+        address liquidator;
         int256 amount;    // liquidity amount: 1e20
         address receiver; // receiver address of the balance margin
         PoolInfo pi;     // pool info
@@ -431,7 +440,7 @@ contract Pools is IPools, Plugin {
             poolId: params.poolId,
             liquidated: params.liquidated,
             receiver: params.receiver,
-            liquidater: msg.sender,
+            liquidator: params.liquidator,
             marginBalance: marginBalance,
             insuranceFund: vars.insuranceFund,
             liquidateReward: vars.liquidateReward
@@ -446,7 +455,7 @@ contract Pools is IPools, Plugin {
         removeAmount = params.amount;
         IMatchingEngine(matchingEngine).updateFund(params.poolId, vars.makerFund, params.pi.indexPrice);
         if (params.liquidated) {
-            emit LiquidatedLiquidity(msg.sender, params.maker, params.poolId, params.amount, vars.settledValue, vars.settledMargin, params.pi.netValue, vars.pnl, vars.insuranceFund+vars.liquidateReward);
+            emit LiquidatedLiquidity(params.liquidator, params.maker, params.poolId, params.amount, vars.settledValue, vars.settledMargin, params.pi.netValue, vars.pnl, vars.insuranceFund+vars.liquidateReward);
         }
         else {
             emit RemovedLiquidity(params.maker, params.poolId, params.amount, vars.settledValue, vars.settledMargin, params.pi.netValue, vars.pnl, vars.removeFee);
@@ -518,7 +527,7 @@ contract Pools is IPools, Plugin {
         bytes32 poolId;
         bool liquidated;
         address receiver;
-        address liquidater;
+        address liquidator;
         int256 marginBalance;
         int256 insuranceFund;
         int256 liquidateReward;
@@ -545,9 +554,9 @@ contract Pools is IPools, Plugin {
         if (params.liquidated) {
             if (params.liquidateReward > 0) {
                 uint256 adjustLiquidateReward = uint256(params.liquidateReward * poolsConfig[params.poolId].precision / Constant.PRECISION);
-                SafeERC20.safeTransfer(IERC20(poolsConfig[params.poolId].asset), params.liquidater, adjustLiquidateReward);
+                SafeERC20.safeTransfer(IERC20(poolsConfig[params.poolId].asset), params.liquidator, adjustLiquidateReward);
             }
-            IInsuranceManager(insurance).liquidaterReward(params.poolId, params.liquidater);
+            IInsuranceManager(insurance).liquidatorReward(params.poolId, params.liquidator);
         }
     }
 
@@ -638,7 +647,7 @@ contract Pools is IPools, Plugin {
         int256 insuranceFund;
         int256 liquidateReward;
     }
-    function trade(TradeParams memory params) public override returns(TradeResult memory result) {
+    function trade(TradeParams memory params) public override nonReentrant returns(TradeResult memory result) {
         require(msg.sender == markets, OnlyMarkets());
         if (brokeInfo[params.poolId].indexPrice > 0) {
             require(params.liquidated, Broked());
@@ -748,7 +757,7 @@ contract Pools is IPools, Plugin {
                 poolId: params.poolId,
                 liquidated: params.liquidated,
                 receiver: params.receiver,
-                liquidater: params.liquidater,
+                liquidator: params.liquidator,
                 marginBalance: result.marginBalance,
                 insuranceFund: vars.insuranceFund,
                 liquidateReward: vars.liquidateReward

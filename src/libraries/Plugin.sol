@@ -43,7 +43,7 @@ abstract contract Plugin is IPlugin, Governable {
         }
     }
 
-    function approve(address plugin, bool isApprove) public {
+    function approve(address plugin, bool isApprove) public override {
         allowances[msg.sender][plugin] = isApprove;
 
         emit Approved(msg.sender, plugin, isApprove);

@@ -69,11 +69,11 @@ contract InsuranceManager is IInsuranceManager, Governable {
         emit InsuranceUsed(poolId, amount);
     }
 
-    function liquidaterReward(bytes32 poolId, address liquidater) public override onlyPools {
+    function liquidatorReward(bytes32 poolId, address liquidator) public override onlyPools {
         uint256 amount = rewardAmount[poolId];
-        userBalances[liquidater][poolToken[poolId]] += amount;
+        userBalances[liquidator][poolToken[poolId]] += amount;
 
-        emit LiquidaterReward(poolId, liquidater, amount);
+        emit LiquidatorReward(poolId, liquidator, amount);
     }
 
     function brokeReward(bytes32 poolId, address trigger) public override onlyPools {

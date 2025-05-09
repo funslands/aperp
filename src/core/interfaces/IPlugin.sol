@@ -15,4 +15,5 @@ interface IPlugin {
     function plugins(uint256 index) external view returns(address);
     function isPlugin(address plugin) external view returns(bool);
     function allowances(address user, address plugin) external view returns(bool);
+    function approve(address plugin, bool isApprove) external;
 }

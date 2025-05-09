@@ -52,7 +52,7 @@ interface IPools {
         bool isIncrease;
         address receiver;
         bool liquidated;
-        address liquidater;
+        address liquidator;
     }
 
     struct TradeResult {
@@ -118,7 +118,7 @@ interface IPools {
 
     event AddedLiquidity(address indexed maker, bytes32 indexed poolId, int256 amount, int256 value, int256 margin, int256 netValue);
     event RemovedLiquidity(address indexed maker, bytes32 indexed poolId, int256 amount, int256 value, int256 margin, int256 netValue, int256 pnl, int256 removeFee);
-    event LiquidatedLiquidity(address indexed liquidater, address indexed maker, bytes32 indexed poolId, int256 amount, int256 value, int256 margin, int256 netValue, int256 pnl, int256 liquidateFee);
+    event LiquidatedLiquidity(address indexed liquidator, address indexed maker, bytes32 indexed poolId, int256 amount, int256 value, int256 margin, int256 netValue, int256 pnl, int256 liquidateFee);
 
     event PoolBroked(bytes32 poolId, address trigger, int256 price);
     event PoolRestored(bytes32 poolId, address trigger);
@@ -127,6 +127,8 @@ interface IPools {
     
     event UpdatedFundingRatio(bytes32 indexed poolId, int256 ratio, int256 frg, int256 unsettledFundingFee);
 
+
+    function paused() external view returns(bool);
     function getPoolConfig(bytes32 poolId) external view returns(PoolConfig memory config);
     function getPosition(bytes32 poolId, address maker) external view returns(Position memory position);
     function getNetValue(bytes32 poolId) external view returns(int256);
@@ -143,7 +145,7 @@ interface IPools {
     function addLiquidity(bytes32 poolId, address maker, int256 margin, int256 amount) external returns(int256 addAmount);
     function addMargin(bytes32 poolId, address maker, int256 margin) external;
     function removeLiquidity(bytes32 poolId, address maker, int256 amount, address receiver) external returns(int256 marginBalance, int256 removeAmount);
-    function liquidate(bytes32 poolId, address maker) external returns(int256 marginBalance, int256 liquidateAmount);
+    function liquidate(bytes32 poolId, address maker, address liquidator) external returns(int256 marginBalance, int256 liquidateAmount);
 
     function takerAddMargin(bytes32 poolId, bool direction, int256 amount) external;
 

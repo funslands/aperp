@@ -81,9 +81,9 @@ interface IMarkets {
     function createMarket(address margin, bytes32 pairId) external returns(bytes32 marketId);
 
     function increasePosition(IncreasePositionParams memory params) external returns(int256 tradeValue);
-    function decreasePosition(bytes32 marketId, bool direction, int256 amount) external returns(int256 marginBalance, int256 tradeValue);
-    function decreasePosition(bytes32 marketId, address taker, bool direction, int256 amount) external returns(int256 marginBalance, int256 tradeValue);
-    function liquidate(bytes32 marketId, address taker, bool direction) external returns(int256 marginBalance, int256 tradeValue);
+    function decreasePosition(bytes32 marketId, bool direction, int256 amount) external returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue);
+    function decreasePosition(bytes32 marketId, address taker, bool direction, int256 amount) external returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue);
+    function liquidate(bytes32 marketId, address taker, address liquidator, bool direction) external returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue);
     function isLiquidatable(bytes32 marketId, address taker, bool direction) external view returns (bool liquidated, int256 liquidatePrice);
     function addMargin(bytes32 marketId, address taker, bool direction, int256 amount) external;
 

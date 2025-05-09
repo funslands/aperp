@@ -128,7 +128,7 @@ contract Markets is IMarkets, Plugin {
             margin: adjustMargin,
             taker: params.taker,
             receiver: params.taker,
-            liquidater: params.taker,
+            liquidator: params.taker,
             isIncrease: true,
             liquidated: false,
             indexPrice: indexPrice
@@ -167,29 +167,31 @@ contract Markets is IMarkets, Plugin {
         emit IncreasedPosition(params.marketId, params.taker, params.direction, adjustMargin, result.amount, result.value, result.tradeFee);
     }
 
-    function decreasePosition(bytes32 marketId, bool direction, int256 amount) public override returns(int256 marginBalance, int256 tradeValue) {
-        (marginBalance, tradeValue) = settlePosition(SettleParams({
+    function decreasePosition(bytes32 marketId, bool direction, int256 amount) public override returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue) {
+        (marginBalance, tradeAmount, tradeValue) = settlePosition(SettleParams({
+            liquidator: msg.sender,
             marketId: marketId,
             taker: msg.sender,
             direction: direction,
             amount: amount,
             isLiquidated: false,
-            reciver: msg.sender
+            receiver: msg.sender
         }));
     }
 
-    function decreasePosition(bytes32 marketId, address taker, bool direction, int256 amount) public override approved(taker) returns(int256 marginBalance, int256 tradeValue) {
-        (marginBalance, tradeValue) = settlePosition(SettleParams({
+    function decreasePosition(bytes32 marketId, address taker, bool direction, int256 amount) public override approved(taker) returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue) {
+        (marginBalance, tradeAmount, tradeValue) = settlePosition(SettleParams({
+            liquidator: msg.sender,
             marketId: marketId,
             taker: taker,
             direction: direction,
             amount: amount,
             isLiquidated: false,
-            reciver: msg.sender
+            receiver: msg.sender
         }));
     }
 
-    function liquidate(bytes32 marketId, address taker, bool direction) public override returns(int256 marginBalance, int256 tradeValue) {
+    function liquidate(bytes32 marketId, address taker, address liquidator, bool direction) public override returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue) {
         require(msg.sender != taker, InvalidCall());
         {
             int256 brokePrice = IPools(pools).getBrokeInfo(marketId).indexPrice;
@@ -197,13 +199,18 @@ contract Markets is IMarkets, Plugin {
             require(liquidated || brokePrice > 0, NotLiquidate());
         }
 
-        (marginBalance, tradeValue) = settlePosition(SettleParams({
+        address receiver = taker;
+        if (isPlugin[msg.sender]) receiver = msg.sender;
+        else liquidator = msg.sender;
+
+        (marginBalance, tradeAmount, tradeValue) = settlePosition(SettleParams({
+            liquidator: liquidator,
             marketId: marketId,
             taker: taker,
             direction: direction,
             amount: type(int256).max,
             isLiquidated: true,
-            reciver: taker
+            receiver: receiver
         }));
     }
 
@@ -274,12 +281,13 @@ contract Markets is IMarkets, Plugin {
     }
 
     struct SettleParams {
+        address liquidator;
         bytes32 marketId;
         address taker;
         bool direction;
         int256 amount;
         bool isLiquidated;
-        address reciver;
+        address receiver;
     }
     struct SettleVars {
         bytes32 positionId;
@@ -289,7 +297,7 @@ contract Markets is IMarkets, Plugin {
         int256 settledMargin;
         int256 settledValue;
     }
-    function settlePosition(SettleParams memory params) private returns (int256 marginBalance, int256 tradeValue) {
+    function settlePosition(SettleParams memory params) private returns (int256 marginBalance, int256 tradeAmount, int256 tradeValue) {
         require(params.amount > 0, InvalidAmount());
         SettleVars memory vars;
         vars.positionId = getPositionId(params.marketId, params.taker, params.direction);
@@ -320,17 +328,18 @@ contract Markets is IMarkets, Plugin {
             amount: vars.amount,
             margin: 0,
             taker: params.taker,
-            receiver: params.reciver,
-            liquidater: msg.sender,
+            receiver: params.receiver,
+            liquidator: params.liquidator,
             isIncrease: false,
             liquidated: params.isLiquidated,
             indexPrice: vars.indexPrice
         }));
         marginBalance = result.marginBalance > 0 ? result.marginBalance : int256(0);
 
+        tradeAmount = result.value;
         tradeValue = result.value;
         emit SettledFunding(params.marketId, params.taker, position.amount, result.increaseFundingPayment, result.frg);
-        // decrease settled positon
+        // decrease settled position
         if (vars.tradeRatio == Constant.BASIS_POINTS_DIVISOR) {
             vars.settledMargin = position.margin;
             vars.settledValue = position.value;
