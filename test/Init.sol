@@ -79,7 +79,7 @@ abstract contract Init is Test {
         vm.label(address(btc), "wBTC");
         vm.label(address(usd), "USD");
 
-        staker = new Staker(address(eth));
+        staker = new Staker(address(eth), address(btc), address(this), "stakeTST", "sTST");
         pools.setConfig(address(markets), address(cm), address(ph), address(me), address(im), address(staker), address(eth), 900);
         cm.setConfig(address(ph), address(me));
 
