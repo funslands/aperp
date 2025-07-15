@@ -5,12 +5,12 @@ pragma solidity =0.8.28;
 
 import "forge-std/Test.sol";
 import "../src/staking/Staker.sol";
-import "../src/governance/Governable.sol";
+import "../src/governance/Governance.sol";
 import "../src/test/TestToken.sol";
 
-contract GovernableTest is Test {
+contract GovernanceTest is Test {
     Staker public staker;
-    Governable public gov;
+    Governance public gov;
     TestToken public WETH;
     TestToken public token;
     address public user1 = vm.addr(0xabcdef0001);
@@ -25,7 +25,7 @@ contract GovernableTest is Test {
 
         token = new TestToken("aperp", "APERP", 18);
         WETH = new TestToken("warped ETH", "WETH", 18);
-        gov = new Governable(address(token));
+        gov = new Governance(address(token));
         staker = new Staker(address(WETH), address(token), address(gov), "stake APERP", "sAPERP");
         gov.setStaker(address(staker));
         vm.label(user1, "User1");
@@ -87,74 +87,74 @@ contract GovernableTest is Test {
     }
 
     function testFlow() public {
-        IGovernable.ExecuteInfo memory executeInfo;
+        IGovernance.ExecuteInfo memory executeInfo;
         executeInfo.addr = new address[](3);
         executeInfo.value = new uint256[](3);
         executeInfo.data = new bytes[](3);
-        vm.expectRevert(IGovernable.InvalidEndTime.selector);
+        vm.expectRevert(IGovernance.InvalidEndTime.selector);
         gov.proposal(current+13 days, "invalid end time", executeInfo);
-        vm.expectRevert(IGovernable.InvalidEndTime.selector);
+        vm.expectRevert(IGovernance.InvalidEndTime.selector);
         gov.proposal(current+33 days, "invalid end time", executeInfo);
 
         executeInfo.data = new bytes[](2);
-        vm.expectRevert(IGovernable.InvalidExecuteInfo.selector);
+        vm.expectRevert(IGovernance.InvalidExecuteInfo.selector);
         gov.proposal(current+20 days, "invalid execute info", executeInfo);
 
         executeInfo.data = new bytes[](3);
         executeInfo.value = new uint256[](1);
-        vm.expectRevert(IGovernable.InvalidExecuteInfo.selector);
+        vm.expectRevert(IGovernance.InvalidExecuteInfo.selector);
         gov.proposal(current+20 days, "invalid execute info", executeInfo);
 
         executeInfo.value = new uint256[](3);
-        vm.expectRevert(IGovernable.InsufficientBalance.selector);
+        vm.expectRevert(IGovernance.InsufficientBalance.selector);
         gov.proposal(current+20 days, "invalid insufficient balance", executeInfo);
 
         vm.startPrank(user2);
-        vm.expectRevert(IGovernable.InsufficientBalance.selector);
+        vm.expectRevert(IGovernance.InsufficientBalance.selector);
         gov.proposal(current+20 days, "invalid insufficient balance", executeInfo);
         vm.stopPrank();
 
         // proposal
         vm.startPrank(user1);
         vm.expectEmit(address(gov));
-        emit IGovernable.Proposaled(user1, 1, current + 21 days, "AIP 1", executeInfo);
+        emit IGovernance.Proposaled(user1, 1, current + 21 days, "AIP 1", executeInfo);
         uint256 res = gov.proposal(current + 21 days, "AIP 1", executeInfo);
         vm.assertEq(res, 1);
         assertVoteInfo(1, user1, "AIP 1", current + 21 days, 0, 0, 0, 0, new bytes(0));
         assertEq(staker.votings(user1), 1);
 
-        vm.expectRevert(abi.encodeWithSelector(IGovernable.Voting.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(IGovernance.Voting.selector, 1));
         gov.proposal(current + 21 days, "AIP 2", executeInfo);
         vm.stopPrank();
 
         vm.startPrank(user4);
         staker.claimStakedToken(104);
         vm.expectEmit(address(gov));
-        emit IGovernable.Proposaled(user4, 2, current + 23 days, "AIP 2", executeInfo);
+        emit IGovernance.Proposaled(user4, 2, current + 23 days, "AIP 2", executeInfo);
         res = gov.proposal(current + 23 days, "AIP 2", executeInfo);
         vm.assertEq(res, 2);
         assertVoteInfo(2, user4, "AIP 2", current + 23 days, 0, 0, 0, 0, new bytes(0));
         assertEq(staker.votings(user4), 2);
 
-        vm.expectRevert(abi.encodeWithSelector(IGovernable.Voting.selector, 2));
+        vm.expectRevert(abi.encodeWithSelector(IGovernance.Voting.selector, 2));
         res = gov.proposal(current + 21 days, "AIP 2", executeInfo);
         vm.stopPrank();
 
         // voting
-        vm.expectRevert(IGovernable.InvalidId.selector);
+        vm.expectRevert(IGovernance.InvalidId.selector);
         gov.vote(0, true);
-        vm.expectRevert(IGovernable.InvalidId.selector);
+        vm.expectRevert(IGovernance.InvalidId.selector);
         gov.vote(0, false);
 
         vm.startPrank(user2);
-        vm.expectRevert(IGovernable.InsufficientBalance.selector);
+        vm.expectRevert(IGovernance.InsufficientBalance.selector);
         gov.vote(1, true);
-        vm.expectRevert(IGovernable.InsufficientBalance.selector);
+        vm.expectRevert(IGovernance.InsufficientBalance.selector);
         gov.vote(2, false);
 
-        vm.expectRevert(IGovernable.InsufficientBalance.selector);
+        vm.expectRevert(IGovernance.InsufficientBalance.selector);
         gov.vote(1, true);
-        vm.expectRevert(IGovernable.InsufficientBalance.selector);
+        vm.expectRevert(IGovernance.InsufficientBalance.selector);
         gov.vote(2, false);
         vm.stopPrank();
 
@@ -162,61 +162,61 @@ contract GovernableTest is Test {
         // aip 1 
         vm.startPrank(user4);
         vm.expectEmit(address(gov));
-        emit IGovernable.Voted(user4, 1, true, 10000e18);
+        emit IGovernance.Voted(user4, 1, true, 10000e18);
         gov.vote(1, true);
         vm.assertEq(gov.accouteVoted(user4, 1), 10000e18);
         assertVoteInfo(1, user1, "AIP 1", current + 21 days, 10000e18, 0, 0, 0, "");
 
-        vm.expectRevert(IGovernable.InvalidId.selector);
+        vm.expectRevert(IGovernance.InvalidId.selector);
         gov.vote(3, true);
 
-        vm.expectRevert(IGovernable.IsVoted.selector);
+        vm.expectRevert(IGovernance.IsVoted.selector);
         gov.vote(1, true);
-        vm.expectRevert(IGovernable.IsVoted.selector);
+        vm.expectRevert(IGovernance.IsVoted.selector);
         gov.vote(2, true);
         vm.stopPrank(); 
 
         staker.claimStakedToken(103);
         vm.startPrank(user3);
         vm.expectEmit(address(gov));
-        emit IGovernable.Voted(user3, 1, true, 3300e18);
+        emit IGovernance.Voted(user3, 1, true, 3300e18);
         gov.vote(1, true);
         assertVoteInfo(1, user1, "AIP 1", current + 21 days, 13300e18, 0, 0, 0, "");
         vm.assertEq(gov.accouteVoted(user3, 1), 3300e18);
 
         vm.expectEmit(address(gov));
-        emit IGovernable.Voted(user3, 2, false, 3300e18);
+        emit IGovernance.Voted(user3, 2, false, 3300e18);
         gov.vote(2, false);
         assertVoteInfo(2, user4, "AIP 2", current + 23 days, 0, 3300e18, 0, 0, "");
         vm.assertEq(gov.accouteVoted(user3, 2), -3300e18);
 
-        vm.expectRevert(IGovernable.IsVoted.selector);
+        vm.expectRevert(IGovernance.IsVoted.selector);
         gov.vote(1, true);
-        vm.expectRevert(IGovernable.IsVoted.selector);
+        vm.expectRevert(IGovernance.IsVoted.selector);
         gov.vote(2, true);
         vm.stopPrank();
 
         vm.warp(current + 22 days);
         vm.startPrank(users[0]);
-        vm.expectRevert(IGovernable.Ended.selector);
+        vm.expectRevert(IGovernance.Ended.selector);
         gov.vote(1, false);
         vm.stopPrank();
 
         // exec aip 1
         vm.expectEmit(address(gov));
-        emit IGovernable.Executed(1, address(this), 2, 7033001e17, 13300e18, 0);
+        emit IGovernance.Executed(1, address(this), 2, 7033001e17, 13300e18, 0);
         gov.execute(1);
         assertVoteInfo(1, user1, "AIP 1", current + 21 days, 13300e18, 0, 2, 7033001e17, new bytes(0));
         vm.assertEq(token.balanceOf(address(this)), 50e18);
-        vm.expectRevert(IGovernable.IsExecuted.selector);
+        vm.expectRevert(IGovernance.IsExecuted.selector);
         gov.execute(1);
-        vm.expectRevert(IGovernable.NotEnd.selector);
+        vm.expectRevert(IGovernance.NotEnd.selector);
         gov.execute(2);
 
         // claim aip 1
         vm.startPrank(user1);
         vm.expectEmit(address(gov));
-        emit IGovernable.Claimed(user1, 1, 50e18);
+        emit IGovernance.Claimed(user1, 1, 50e18);
         res = gov.claim(1);
         vm.assertEq(res, 50e18);
         vm.assertEq(gov.claimed(user1, 1), true);
@@ -224,7 +224,7 @@ contract GovernableTest is Test {
 
         vm.startPrank(user3);
         vm.expectEmit(address(gov));
-        emit IGovernable.Claimed(user3, 1, 235714285714285714285);
+        emit IGovernance.Claimed(user3, 1, 235714285714285714285);
         res = gov.claim(1);
         vm.assertEq(res, 235714285714285714285);
         vm.assertEq(gov.claimed(user3, 1), true);
@@ -232,7 +232,7 @@ contract GovernableTest is Test {
 
         vm.startPrank(user4);
         vm.expectEmit(address(gov));
-        emit IGovernable.Claimed(user4, 1, 714285714285714285714);
+        emit IGovernance.Claimed(user4, 1, 714285714285714285714);
         res = gov.claim(1);
         vm.assertEq(res, 714285714285714285714);
         vm.assertEq(gov.claimed(user4, 1), true);
@@ -253,12 +253,12 @@ contract GovernableTest is Test {
         vm.stopPrank();
 
         // execute aip 2
-        vm.expectRevert(IGovernable.NotEnd.selector);
+        vm.expectRevert(IGovernance.NotEnd.selector);
         gov.execute(2);
 
         vm.warp(current + 24 days);
         vm.expectEmit(address(gov));
-        emit IGovernable.Executed(2, address(this), 2, 7033001e17, 85000e18, 178300e18);
+        emit IGovernance.Executed(2, address(this), 2, 7033001e17, 85000e18, 178300e18);
         gov.execute(2);
         vm.assertEq(token.balanceOf(address(this)), 100e18);
 
@@ -414,7 +414,7 @@ contract GovernableTest is Test {
         uint256 totalSupply,
         bytes memory executeInfo
     ) public view {
-        IGovernable.Vote memory info = gov.getVoteInfo(id);
+        IGovernance.Vote memory info = gov.getVoteInfo(id);
         vm.assertEq(info.proposalor, proposalor, "EPR");
         vm.assertEq(info.describe, describe, "ED");
         vm.assertEq(info.endTime, endTime, "EDT");

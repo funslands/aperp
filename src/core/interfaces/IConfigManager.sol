@@ -23,6 +23,7 @@ interface IConfigManager {
         int256 reserveRatio;
         int256 dust;        // 1e20
         string pair;
+        uint8 tickConfigId;
     }
 
     error InvalidMultiplier();
@@ -42,7 +43,7 @@ interface IConfigManager {
     error PairExisted();
 
     error ConfigTooMuch();
-    error InvalidId();
+    error InvalidTickConfigId();
     error InvalidTickConfig();
 
     event AddedAsset(
@@ -78,7 +79,8 @@ interface IConfigManager {
         bytes32 pythFeedId,
         int256 reserveRatio,
         int256 dust,
-        string pair
+        string pair,
+        uint8 tickConfigId
     );
 
     event AddedTickConfig(uint8 indexed poolId, IMatchingEngine.TickConfig[] config);

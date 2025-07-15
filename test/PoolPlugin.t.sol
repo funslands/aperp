@@ -67,9 +67,22 @@ contract PoolPluginTest is Init {
         t2.dos(address(pools), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(pp), true));
         t3.dos(address(pools), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(pp), true));
         t4.dos(address(pools), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(pp), true));
+
+        pools.approve(address(this), true);
+
+        vm.startPrank(address(t1));
+        pools.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(address(t2));
+        pools.approve(address(this), true);
+        vm.stopPrank();
     }
 
     function testParams() public {
+        vm.assertEq(pp.calcPoolId("ETH/USD", address(eth)), ethPoolId);
+        vm.assertEq(pp.calcPoolId("ETH/USD", address(btc)), btcPoolId);
+        vm.assertEq(pp.calcPoolId("BTC/USD", address(usd)), usdPoolId);
+
         IPoolPlugin.OrderParams memory params;
         params.amount = 2e20;
         params.margin = 1e17;
@@ -541,53 +554,6 @@ contract PoolPluginTest is Init {
         results = updatePriceAndExecuteOrder(10, 80020e8, 2001e8, false);
         vm.assertEq(results.length, 1);
         vm.assertEq(results[0], 1);
-    }
-
-    function testUpdateAndLiquidate() public {
-        usd.approve(address(markets), 1e18);
-        usd.approve(address(im), 1e18);
-
-        vm.warp(block.timestamp+31 days);
-        setPrice(btcId, 130066e8);
-        pools.removeLiquidity(usdPoolId, 500000e20);
-
-        
-        setPrice(btcId, 80000e8);
-        pools.addLiquidity(usdPoolId, address(t1), 20000e6, 300000e20);
-        pools.addLiquidity(usdPoolId, address(t2), 20000e6, 400000e20);
-        
-        markets.increasePosition(IMarkets.IncreasePositionParams({
-            marketId: usdPoolId,
-            taker: address(t3),
-            direction: true,
-            margin: 10000e6,
-            amount: 1e20
-        }));
-
-
-        setPrice(btcId, 117100e8);
-
-        pools.broke(usdPoolId);
-        vm.assertEq(im.userBalances(address(this), address(usd)), 50e6);
-
-        im.donate(usdPoolId, 20000e6);
-        vm.expectEmit(address(pools));
-        emit IPools.LiquidatedLiquidity(address(this), address(t2), usdPoolId, 400000e20, 400000e20, 20000e20, 9475525955, -209789618e16, 0);
-        updatePriceAndLiquidateLiquidity(usdPoolId, address(t2), 117100e8, 2000e8, false);
-        vm.assertEq(im.userBalances(address(this), address(usd)), 55e6);
-
-        markets.liquidate(usdPoolId, address(t3), address(this), true);
-        
-
-        uint256 b = usd.balanceOf(address(t1));
-        vm.expectEmit(address(pools));
-        emit IPools.LiquidatedLiquidity(address(this), address(t1), usdPoolId, 300000e20, 300000e20, 20000e20, 9475525955, -1573422135e15, 750e20);
-        updatePriceAndLiquidateLiquidity(usdPoolId, address(t1), 117100e8, 2000e8, false);
-        vm.assertEq(im.userBalances(address(this), address(usd)), 65e6);
-        vm.assertEq(usd.balanceOf(address(t1)), b+3515778650);
-
-        pools.restorePool(usdPoolId);
-        vm.assertEq(im.userBalances(address(this), address(usd)), 115e6);
     }
 
     function updatePriceAndExecuteOrder(uint256 executeNum, int256 btcPrice, int256 ethPrice, bool updateOracle) public returns(uint8[] memory results) {

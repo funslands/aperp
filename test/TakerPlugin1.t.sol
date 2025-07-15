@@ -88,6 +88,28 @@ contract TakerPlugin1Test is Init {
         t2.dos(address(markets), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(tp), true));
         t3.dos(address(markets), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(tp), true));
         t4.dos(address(markets), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(tp), true));
+
+        pools.approve(address(this), true);
+        markets.addPlugin(address(this));
+
+        vm.startPrank(address(t0));
+        pools.approve(address(this), true);
+        pools.approve(address(t0), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(address(t1));
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        markets.approve(address(t1), true);
+        vm.stopPrank();
+        vm.startPrank(address(t2));
+        pools.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(address(a2));
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        markets.approve(address(a2), true);
+        vm.stopPrank();
     }
 
     function testConditionalOrder() public {

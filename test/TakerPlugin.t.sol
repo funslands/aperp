@@ -88,6 +88,27 @@ contract TakerPluginTest is Init {
         t2.dos(address(markets), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(tp), true));
         t3.dos(address(markets), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(tp), true));
         t4.dos(address(markets), 0, abi.encodeWithSelector(IPlugin.approve.selector, address(tp), true));
+
+        pools.approve(address(this), true);
+        markets.addPlugin(address(this));
+
+        vm.startPrank(address(t0));
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(address(t1));
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        markets.approve(address(t1), true);
+        vm.stopPrank();
+        vm.startPrank(address(t2));
+        pools.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(address(a2));
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        markets.approve(address(a2), true);
+        vm.stopPrank();
     }
 
     function testParams() public { 
@@ -639,7 +660,7 @@ contract TakerPluginTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(usdPoolId, 1000227);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, p.margin, p.amount, p.value, 2412e16, -197181816e14, 200045454e12, 0);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, address(this), p.margin, p.amount, p.value, 2412e16, -197181816e14, 200045454e12, 0);
         int256 marginBalance = updatePriceAndLiquidatePosition(usdPoolId, a2, true, 6030000e6, 2000e8, false);
         vm.assertEq(marginBalance, 256456, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");

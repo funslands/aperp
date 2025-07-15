@@ -79,11 +79,12 @@ contract ConfigManager is IConfigManager, Governable {
         emit UpdatedAsset(token, multiplier, pythFeedId, minimumMargin, makerLimit);
     }
 
-    function updatePair(string memory pair, int256 im, int256 mm, bytes32 pythFeedId, int256 reserveRatio, int256 dust, address oracle) public onlyGov() {
+    function updatePair(string memory pair, int256 im, int256 mm, bytes32 pythFeedId, int256 reserveRatio, int256 dust, address oracle, uint8 tickConfigId) public onlyGov() {
         require(reserveRatio >= 1e7 && reserveRatio <= 5e7, InvalidReserveRatio());
         require(im >= 1e5 && im <= 1e7, InvalidIM()); // 10-1000X
         require(mm >= im/5 && mm <= im/2, InvalidMM()); 
         require(dust >= 1e15, InvalidDust());
+        require(tickConfigId > 0 && tickConfigId < tickConfigs.length, InvalidTickConfigId());
 
         bytes32 pairId = keccak256(abi.encode(pair));
         if (pairConfigs[pairId].pairId == bytes32(0)) {
@@ -101,10 +102,11 @@ contract ConfigManager is IConfigManager, Governable {
             mmRatio: mm,
             pythFeedId: pythFeedId,
             reserveRatio: reserveRatio,
-            dust: dust
+            dust: dust,
+            tickConfigId: tickConfigId
         });
 
-        emit UpdatedPair(pairId, im, mm, pythFeedId, reserveRatio, dust, pair);
+        emit UpdatedPair(pairId, im, mm, pythFeedId, reserveRatio, dust, pair, tickConfigId);
     }
 
     function getTickConfigNum() public override view returns(uint256) {
@@ -112,7 +114,7 @@ contract ConfigManager is IConfigManager, Governable {
     }
 
     function getTickConfig(uint8 id) public view override returns(IMatchingEngine.TickConfig[] memory) {
-        require(id > 0 && id <= tickConfigs.length, InvalidId());
+        require(id > 0 && id < tickConfigs.length, InvalidTickConfigId());
         return abi.decode(tickConfigs[id], (IMatchingEngine.TickConfig[]));
     }
 
@@ -127,7 +129,7 @@ contract ConfigManager is IConfigManager, Governable {
     }
 
     function updateTickConfig(uint8 id, IMatchingEngine.TickConfig[] memory config) public onlyGov() {
-        require(id > 0 && id <= tickConfigs.length-1, InvalidId());
+        require(id > 0 && id < tickConfigs.length, InvalidTickConfigId());
         require(IMatchingEngine(matchingEngine).checkTickConfig(config), InvalidTickConfig());
         
         tickConfigs[id] = abi.encode(config);

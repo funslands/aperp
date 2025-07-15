@@ -10,11 +10,10 @@ import "./interfaces/IInsuranceManager.sol";
 import "../staking/interfaces/IStaker.sol";
 import "../libraries/Constant.sol";
 import "../libraries/Plugin.sol";
-import "../libraries/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 
-contract Pools is IPools, Plugin, ReentrancyGuard {
+contract Pools is IPools, Plugin {
     address public markets;
     address public configManager;
     address public priceHelper;
@@ -30,11 +29,11 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
 
 
     // poolId => poolConfig
-    mapping (bytes32=> PoolConfig) public poolsConfig;
+    mapping (bytes32=> PoolConfig) private poolsConfig;
 
     // makerPosition
     // poolId => trader=> maker position
-    mapping(bytes32=> mapping(address=> Position)) public makerPositions;
+    mapping(bytes32=> mapping(address=> Position)) private makerPositions;
     // poolId => global maker position
     mapping(bytes32=> PoolStatus) public globalPosition;
 
@@ -83,7 +82,7 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         return makerPositions[poolId][maker];
     }
 
-    function createPool(bytes32 pairId, address asset, int256 amount, uint8 tickConfigId) public returns(bytes32 poolId) {
+    function createPool(bytes32 pairId, address asset) public returns(bytes32 poolId) {
         poolId = keccak256(abi.encode(pairId, asset));
         require(poolsConfig[poolId].asset == address(0), PoolExisted());
 
@@ -92,11 +91,7 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         IConfigManager.AssetConfig memory assetConfig = IConfigManager(configManager).getAssetConfig(asset);
         require(assetConfig.token == asset, InvalidAsset());
 
-        int256 assetPrice = IPriceHelper(priceHelper).getIndexPrice(bytes32(uint256(uint160(asset))));
-        require(assetPrice != 0, ErrorPrice());
-        // initial liquidity greater than 100k USD
         int256 precision = int256(10 ** assetConfig.decimals);
-        require(assetPrice * amount / precision >= 100000*Constant.PRICE_PRECISION, InsufficientAmount());
 
         poolsConfig[poolId] = PoolConfig({
             precision: precision,
@@ -117,16 +112,12 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
 
         IMarkets(markets).createMarket(asset, pairId);
         // config match engine 
-        IMatchingEngine.TickConfig[] memory tickConfig = IConfigManager(configManager).getTickConfig(tickConfigId);
+        IMatchingEngine.TickConfig[] memory tickConfig = IConfigManager(configManager).getTickConfig(pairConfig.tickConfigId);
         IMatchingEngine(matchingEngine).updateTickConfig(poolId, tickConfig);
 
         IInsuranceManager(insurance).updatePoolConfig(poolId, asset, uint256(assetConfig.minimumMargin/10));
 
-        int256 lpAmount = amount * Constant.PRECISION / precision;
-        addLiquidity(poolId, msg.sender, amount, lpAmount);
-        makerPositions[poolId][msg.sender].initial = true;
-
-        emit CreatedPool(poolId, poolsConfig[poolId], amount, tickConfigId);
+        emit CreatedPool(poolId, poolsConfig[poolId]);
     }
 
     function updatePoolConfig(bytes32 poolId, PoolConfig memory config) public onlyGov() {
@@ -193,10 +184,6 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
             makerFund = makerFund * multiplier / Constant.BASIS_POINTS_DIVISOR; 
     }
 
-    function getOraclePrice(bytes32 poolId) public view override returns(int256) {
-        return IPriceHelper(priceHelper).getOraclePrice(poolsConfig[poolId].pairId);
-    }
-
     function getIndexPrice(bytes32 poolId) public view override returns(int256) {
         return IPriceHelper(priceHelper).getIndexPrice(poolsConfig[poolId].pairId);
     }
@@ -240,7 +227,7 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
      * @param margin asset decimals
      * @param amount liquidity amount: 1e20
      */
-    function addLiquidity(bytes32 poolId, address maker, int256 margin, int256 amount) public override nonReentrant returns(int256 addAmount) {
+    function addLiquidity(bytes32 poolId, address maker, int256 margin, int256 amount) public override approved(maker) returns(int256 addAmount) {
         PoolConfig memory poolConfig = poolsConfig[poolId];
         require(!paused, Paused());
         require(!poolConfig.addPaused, AddPaused());
@@ -264,8 +251,6 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
 
         Position storage position = makerPositions[poolId][maker];
 
-        if (position.initial && position.increaseTime + 30 days < block.timestamp) position.initial = false;
-
         // update maker position
         position.amount += amount;
         position.margin += margin;
@@ -284,21 +269,8 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         emit AddedLiquidity(maker, poolId, amount, value, margin, pi.netValue);
     }
 
-    function removeLiquidity(bytes32 poolId, int256 amount) public nonReentrant returns(int256 marginBalance, int256 removeAmount) {
-        PoolInfo memory pi = poolInfo(poolId, true, true);
-        (marginBalance, removeAmount) = settlePosition(SettleParams({
-            poolId: poolId,
-            maker: msg.sender,
-            liquidator: msg.sender,
-            liquidated: false,
-            amount: amount,
-            receiver: msg.sender,
-            pi: pi
-        }));
-    }
-
     /// @notice This is a dangerous operation, please authorize carefully
-    function removeLiquidity(bytes32 poolId, address maker, int256 amount, address receiver) public override nonReentrant approved(maker) returns(int256 marginBalance, int256 removeAmount) {
+    function removeLiquidity(bytes32 poolId, address maker, int256 amount, address receiver) public override approved(maker) returns(int256 marginBalance, int256 removeAmount) {
         PoolInfo memory pi = poolInfo(poolId, true, true);
         (marginBalance, removeAmount) = settlePosition(SettleParams({
             poolId: poolId,
@@ -333,7 +305,7 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         emit AddedMargin(maker, poolId, margin);
     }
 
-    function liquidate(bytes32 poolId, address maker, address liquidator) public override nonReentrant returns(int256 marginBalance, int256 liquidateAmount) {
+    function liquidate(bytes32 poolId, address maker, address liquidator) public override returns(int256 marginBalance, int256 liquidateAmount) {
         require(msg.sender != maker, InvalidCall());
         PoolInfo memory pi = poolInfo(poolId, false, true);
         {
@@ -385,8 +357,6 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         Position memory position = makerPositions[params.poolId][params.maker];
         
         require(position.amount > 0, NotPosition());
-        if (position.initial)
-            require(position.increaseTime + 30 days < block.timestamp, PositionLocked(position.increaseTime + 30 days));
         PoolConfig memory poolConfig = poolsConfig[params.poolId];
         require(params.amount > poolConfig.dust, InvalidAmount());
         require(!paused, Paused());
@@ -428,7 +398,6 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         position.amount -= params.amount;
         position.margin -= vars.settledMargin;
         position.value  -= vars.settledValue;
-        if (position.initial && position.amount == 0) position.initial = false;
         makerPositions[params.poolId][params.maker] = position;
 
         // update global maker position
@@ -647,7 +616,7 @@ contract Pools is IPools, Plugin, ReentrancyGuard {
         int256 insuranceFund;
         int256 liquidateReward;
     }
-    function trade(TradeParams memory params) public override nonReentrant returns(TradeResult memory result) {
+    function trade(TradeParams memory params) public override returns(TradeResult memory result) {
         require(msg.sender == markets, OnlyMarkets());
         if (brokeInfo[params.poolId].indexPrice > 0) {
             require(params.liquidated, Broked());

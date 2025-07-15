@@ -104,7 +104,7 @@ contract Markets is IMarkets, Plugin {
         return positions[getPositionId(marketId, taker, direction)];
     }
 
-    function increasePosition(IncreasePositionParams memory params) public override returns(int256 tradeValue) {
+    function increasePosition(IncreasePositionParams memory params) public override approved(params.taker) returns(int256 tradeValue) {
         require(!paused, Paused());
         MarketConfig memory market = markets[params.marketId];
         require(market.margin != address(0), InvalidMarketId());
@@ -165,18 +165,6 @@ contract Markets is IMarkets, Plugin {
         tradeValue = result.value;
         
         emit IncreasedPosition(params.marketId, params.taker, params.direction, adjustMargin, result.amount, result.value, result.tradeFee);
-    }
-
-    function decreasePosition(bytes32 marketId, bool direction, int256 amount) public override returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue) {
-        (marginBalance, tradeAmount, tradeValue) = settlePosition(SettleParams({
-            liquidator: msg.sender,
-            marketId: marketId,
-            taker: msg.sender,
-            direction: direction,
-            amount: amount,
-            isLiquidated: false,
-            receiver: msg.sender
-        }));
     }
 
     function decreasePosition(bytes32 marketId, address taker, bool direction, int256 amount) public override approved(taker) returns(int256 marginBalance, int256 tradeAmount, int256 tradeValue) {
@@ -363,7 +351,7 @@ contract Markets is IMarkets, Plugin {
 
         
         if (params.isLiquidated) {
-            emit LiquidatedPosition(params.marketId, params.taker, params.direction, vars.settledMargin, -vars.amount, vars.settledValue, result.tradeFee, result.pnl, result.liquidateFee, result.settledFundingPayment);
+            emit LiquidatedPosition(params.marketId, params.taker, params.direction, params.liquidator, vars.settledMargin, -vars.amount, vars.settledValue, result.tradeFee, result.pnl, result.liquidateFee, result.settledFundingPayment);
         } else {
             emit DecreasedPosition(params.marketId, params.taker, params.direction, vars.settledMargin, -vars.amount, vars.settledValue, result.tradeFee, result.pnl, result.settledFundingPayment);
         }

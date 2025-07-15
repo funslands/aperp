@@ -32,6 +32,13 @@ contract PoolPlugin is IPoolPlugin, ReentrancyGuard {
         minimumExecutionFee = _minimumExecutionFee;
     }
 
+    function calcPoolId(string memory symbol, address asset) public pure returns(bytes32) {
+        return keccak256(abi.encode(
+            keccak256(abi.encode(symbol)), 
+            asset
+        ));
+    }
+
     function getOrderInfo(uint256 orderId, bool isConditional) external override view returns(Order memory info) {
         orderId -= 1;
         info = isConditional ? conditionalOrders[orderId] : orders[orderId];

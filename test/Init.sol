@@ -145,9 +145,6 @@ abstract contract Init is Test {
 
         }), address(usdOracle));
 
-        cm.updatePair("BTC/USD", 1e6, 5e5, priceInfos[btcId].pythId, 2e7, 1e15, priceInfos[btcId].oracle);
-        cm.updatePair("ETH/USD", 1e6, 5e5, priceInfos[ethId].pythId, 2e7, 1e16, priceInfos[ethId].oracle);
-
         IMatchingEngine.TickConfig[] memory tickConfig = new IMatchingEngine.TickConfig[](7);
         tickConfig[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});
         tickConfig[1] = IMatchingEngine.TickConfig({usageRatio: 1e6, slippage: 5e4});
@@ -174,15 +171,23 @@ abstract contract Init is Test {
         tickConfig[6] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 2e7});
         cm.addTickConfig(tickConfig);
 
+        cm.updatePair("BTC/USD", 1e6, 5e5, priceInfos[btcId].pythId, 2e7, 1e15, priceInfos[btcId].oracle, 1);
+        cm.updatePair("ETH/USD", 1e6, 5e5, priceInfos[ethId].pythId, 2e7, 1e16, priceInfos[ethId].oracle, 1);
+
         btc.mint(address(this), 1e18);
         btc.approve(address(pools), 1e18);
         usd.mint(address(this), 1e18);
         usd.approve(address(pools), 1e18);
         eth.deposit{value: 50e18}();
         eth.approve(address(pools), 50e18);
-        usdPoolId = pools.createPool(getPairId("BTC/USD"), address(usd), 110000e6, 1);
-        btcPoolId = pools.createPool(getPairId("ETH/USD"), address(btc), 2e9, 1);
-        ethPoolId = pools.createPool(getPairId("ETH/USD"), address(eth), 50e18, 1);
+        usdPoolId = pools.createPool(getPairId("BTC/USD"), address(usd));
+        btcPoolId = pools.createPool(getPairId("ETH/USD"), address(btc));
+        ethPoolId = pools.createPool(getPairId("ETH/USD"), address(eth));
+        pools.addPlugin(address(this));
+        pools.approve(address(this), true);
+        pools.addLiquidity(usdPoolId, address(this), 110000e6, 110000e20);
+        pools.addLiquidity(btcPoolId, address(this), 2e9, 2e20);
+        pools.addLiquidity(ethPoolId, address(this), 50e18, 50e20);
     }
 
     function setPrice(bytes32 priceId, int256 price) public {

@@ -14,6 +14,60 @@ contract LiquidateBTCTest is Init {
 
     function setUp() public {
         initial();
+
+        pools.addPlugin(a1);
+        pools.addPlugin(a2);
+        pools.addPlugin(l1);
+        pools.addPlugin(l2);
+        pools.addPlugin(t1);
+        pools.addPlugin(t2);
+        markets.addPlugin(address(this));
+        markets.addPlugin(a1);
+        markets.addPlugin(a2);
+        markets.addPlugin(l1);
+        markets.addPlugin(l2);
+        markets.addPlugin(t1);
+        markets.addPlugin(t2);
+
+        markets.approve(address(this), true);
+        vm.startPrank(a1);
+        pools.approve(a1, true);
+        markets.approve(a1, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(a2);
+        pools.approve(a2, true);
+        markets.approve(a2, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+
+        vm.startPrank(t1);
+        pools.approve(t1, true);
+        markets.approve(t1, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(t2);
+        pools.approve(t2, true);
+        markets.approve(t2, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+
+        vm.startPrank(l1);
+        pools.approve(l1, true);
+        markets.approve(l1, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(l2);
+        pools.approve(l2, true);
+        markets.approve(l2, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
     }
 
     // test liquidate taker short position 0
@@ -55,14 +109,15 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(btcPoolId, 249005);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(btcPoolId, a2, false, p.margin, p.amount, p.value, 8724e12, -18896e14, 49801e12, 0);
+        emit IMarkets.LiquidatedPosition(btcPoolId, a2, false, address(this), p.margin, p.amount, p.value, 8724e12, -18896e14, 49801e12, 0);
         (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, address(this), false);
         vm.assertEq(marginBalance, 439068, "MBE");
         vm.assertEq(im.userBalances(address(this), address(btc)), 100000, "UBE");
         vm.assertEq(im.poolBalances(btcPoolId), 249005, "PBE");
         assertTakerPosition(btcPoolId, a2, false, 0, 0, 0, 0, 0);
-        vm.assertEq(btc.balanceOf(a2), 4e7+439068, "A2B");
-        vm.assertEq(btc.balanceOf(address(this)), balance0+249005, "IMB");
+        // fund to plugin[this]
+        vm.assertEq(btc.balanceOf(a2), 4e7, "A2B");
+        vm.assertEq(btc.balanceOf(address(this)), balance0+249005+439068, "IMB");
     }
 
     // test liquidate taker short position 1
@@ -102,8 +157,8 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(btcPoolId, 36718);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(btcPoolId, a2, false, p.margin, p.amount, p.value, 876e13, -19796e14, 367184e10, 0);
-        (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, a1, false);
+        emit IMarkets.LiquidatedPosition(btcPoolId, a2, false, address(this), p.margin, p.amount, p.value, 876e13, -19796e14, 367184e10, 0);
+        (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, address(this), false);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(btc)), 100000, "UBE");
         vm.assertEq(im.poolBalances(btcPoolId), 36718, "PBE");
@@ -147,7 +202,7 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceUsed(btcPoolId, 1589605);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(btcPoolId, a2, false, p.margin, p.amount, p.value, 0, -851933280000000000, 0, 291168000000000000);
+        emit IMarkets.LiquidatedPosition(btcPoolId, a2, false, address(this), p.margin, p.amount, p.value, 0, -851933280000000000, 0, 291168000000000000);
         (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, address(this), false);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(btc)), 100000, "UBE");
@@ -213,14 +268,15 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(btcPoolId, 1283294);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(btcPoolId, a2, true, p.margin, p.amount, p.value, 39e15, -5163525e12, 2566588125e8, 2499435e12);
+        emit IMarkets.LiquidatedPosition(btcPoolId, a2, true, address(this), p.margin, p.amount, p.value, 39e15, -5163525e12, 2566588125e8, 2499435e12);
         (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, address(this), true);
         vm.assertEq(marginBalance, 3157, "MBE");
         vm.assertEq(im.userBalances(address(this), address(btc)), 100000, "UBE");
         vm.assertEq(im.poolBalances(btcPoolId), 1283294, "PBE");
         assertTakerPosition(btcPoolId, a2, true, 0, 0, 0, 0, 0);
-        vm.assertEq(btc.balanceOf(a2), 3157, "A2B");
-        vm.assertEq(btc.balanceOf(address(this)), balance0+1283294, "IMB");
+        // fund to plugin[this]
+        vm.assertEq(btc.balanceOf(a2), 0, "A2B");
+        vm.assertEq(btc.balanceOf(address(this)), balance0+1283294+3157, "IMB");
 
         vm.assertEq(pools.unsettledFundingPayment(btcPoolId), 0);
     }
@@ -259,7 +315,7 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(btcPoolId, 845105);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(btcPoolId, a2, true, p.margin, p.amount, p.value, 3128e13, -33736e14, 84510560000000000, 147798e13);
+        emit IMarkets.LiquidatedPosition(btcPoolId, a2, true, address(this), p.margin, p.amount, p.value, 3128e13, -33736e14, 84510560000000000, 147798e13);
         (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, address(this), true);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(btc)), 100000, "UBE");
@@ -299,7 +355,7 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceUsed(btcPoolId, 3725225);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(btcPoolId, a2, true, p.margin, p.amount, p.value, 0, -234818324e10, 0, 0);
+        emit IMarkets.LiquidatedPosition(btcPoolId, a2, true, address(this), p.margin, p.amount, p.value, 0, -234818324e10, 0, 0);
         (int256 marginBalance, , ) = markets.liquidate(btcPoolId, a2, address(this), true);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(btc)), 1e5, "UBE");
@@ -316,7 +372,7 @@ contract LiquidateBTCTest is Init {
         assertBrokePrice(btcPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(ethId, 1000066e8);
-        pools.removeLiquidity(btcPoolId, 500000e20);
+        pools.removeLiquidity(btcPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(btcPoolId, address(this), false, false);
 
         
@@ -371,7 +427,7 @@ contract LiquidateBTCTest is Init {
         markets.liquidate(btcPoolId, t1, address(this), true);
 
         vm.startPrank(t1);
-        markets.decreasePosition(btcPoolId, true, 1e20);
+        markets.decreasePosition(btcPoolId, t1, true, 1e20);
         vm.stopPrank();
 
         vm.expectRevert(IPools.InsufficientLiquidity.selector);
@@ -391,7 +447,7 @@ contract LiquidateBTCTest is Init {
         assertBrokePrice(btcPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(ethId, 1000066e8);
-        pools.removeLiquidity(btcPoolId, 500000e20);
+        pools.removeLiquidity(btcPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(btcPoolId, address(this), false, false);
 
         
@@ -419,9 +475,9 @@ contract LiquidateBTCTest is Init {
         pools.liquidate(btcPoolId, l1, address(this));
 
         vm.expectEmit(address(pools));
-        emit IPools.LiquidatedLiquidity(address(this), l2, btcPoolId, 40e20, 40e20, 2e20, 9546413807, -181434477200000000000, 10000000000000000000);
+        emit IPools.LiquidatedLiquidity(l1, l2, btcPoolId, 40e20, 40e20, 2e20, 9546413807, -181434477200000000000, 10000000000000000000);
         (marginBalance, ) = pools.liquidate(btcPoolId, l2, l1);
-        vm.assertEq(im.userBalances(address(this), address(btc)), 1e5);
+        vm.assertEq(im.userBalances(l1, address(btc)), 1e5);
         vm.assertEq(marginBalance, 85655228);
         assertGlobalPosition(btcPoolId, 4e20, 4e20+1814344772e11+202044006272000000, 2e20+1814344772e11+202044006272000000);
 
@@ -437,11 +493,11 @@ contract LiquidateBTCTest is Init {
         assertBrokePrice(btcPoolId, l1, true, true);
 
         pools.broke(btcPoolId);
-        vm.assertEq(im.userBalances(address(this), address(btc)), 11e5);
+        vm.assertEq(im.userBalances(address(this), address(btc)), 10e5);
 
         vm.expectRevert(IPools.Broked.selector);
         vm.startPrank(t1);
-        markets.decreasePosition(btcPoolId, true, 100e20);
+        markets.decreasePosition(btcPoolId, t1, true, 100e20);
         vm.stopPrank();
 
         markets.liquidate(btcPoolId, t1, address(this), true);
@@ -449,7 +505,7 @@ contract LiquidateBTCTest is Init {
         vm.expectEmit(address(pools));
         emit IPools.LiquidatedLiquidity(address(this), l1, btcPoolId, 4e20, 4e20, 2e20, 5021413814, -199143447440000000000, 856552560000000000);
         (marginBalance, ) = pools.liquidate(btcPoolId, l1, address(this));
-        vm.assertEq(im.userBalances(address(this), address(btc)), 13e5);
+        vm.assertEq(im.userBalances(address(this), address(btc)), 12e5);
         vm.assertEq(marginBalance, 0);
         
 
@@ -463,7 +519,7 @@ contract LiquidateBTCTest is Init {
         }));
 
         pools.restorePool(btcPoolId);
-        vm.assertEq(im.userBalances(address(this), address(btc)), 23e5);
+        vm.assertEq(im.userBalances(address(this), address(btc)), 22e5);
 
         pools.addLiquidity(btcPoolId, l1, 2e9, 4e20);
     }
@@ -476,7 +532,7 @@ contract LiquidateBTCTest is Init {
         assertBrokePrice(btcPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(ethId, 1000066e8);
-        pools.removeLiquidity(btcPoolId, 500000e20);
+        pools.removeLiquidity(btcPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(btcPoolId, address(this), false, false);
 
         
@@ -526,7 +582,7 @@ contract LiquidateBTCTest is Init {
 
         vm.expectRevert(IPools.Broked.selector);
         vm.startPrank(t1);
-        markets.decreasePosition(btcPoolId, true, 100e20);
+        markets.decreasePosition(btcPoolId, t1, true, 100e20);
         vm.stopPrank();
 
         // vm.expectRevert(IERC20Errors.ERC20InsufficientBalance.selector);
@@ -569,7 +625,7 @@ contract LiquidateBTCTest is Init {
         assertBrokePrice(btcPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(ethId, 130066e8);
-        pools.removeLiquidity(btcPoolId, 500000e20);
+        pools.removeLiquidity(btcPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(btcPoolId, address(this), false, false);
 
         
@@ -619,13 +675,12 @@ contract LiquidateBTCTest is Init {
         vm.assertEq(im.userBalances(address(this), address(btc)), 23e5);
     }
 
-    function assertPosition(bytes32 poolId, address maker, int256 amount, int256 value, int256 margin, uint256 increaseTime, bool initial) private view {
+    function assertPosition(bytes32 poolId, address maker, int256 amount, int256 value, int256 margin, uint256 increaseTime) private view {
         IPools.Position memory pos = pools.getPosition(poolId, maker);
         vm.assertEq(pos.amount, amount, "MPA");
         vm.assertEq(pos.margin, margin, "MPM");
         vm.assertEq(pos.value, value, "MPV");
         vm.assertEq(pos.increaseTime, increaseTime, "MPT");
-        vm.assertEq(pos.initial, initial, "MPI");
     }
 
     function assertGlobalPosition(bytes32 poolId, int256 amount, int256 value, int256 margin) private view {

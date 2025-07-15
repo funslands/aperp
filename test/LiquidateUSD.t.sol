@@ -14,6 +14,61 @@ contract LiquidateUSDTest is Init {
 
     function setUp() public {
         initial();
+
+        
+        pools.addPlugin(a1);
+        pools.addPlugin(a2);
+        pools.addPlugin(l1);
+        pools.addPlugin(l2);
+        pools.addPlugin(t1);
+        pools.addPlugin(t2);
+        markets.addPlugin(address(this));
+        markets.addPlugin(a1);
+        markets.addPlugin(a2);
+        markets.addPlugin(l1);
+        markets.addPlugin(l2);
+        markets.addPlugin(t1);
+        markets.addPlugin(t2);
+
+        markets.approve(address(this), true);
+        vm.startPrank(a1);
+        pools.approve(a1, true);
+        markets.approve(a1, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(a2);
+        pools.approve(a2, true);
+        markets.approve(a2, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+
+        vm.startPrank(t1);
+        pools.approve(t1, true);
+        markets.approve(t1, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(t2);
+        pools.approve(t2, true);
+        markets.approve(t2, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+
+        vm.startPrank(l1);
+        pools.approve(l1, true);
+        markets.approve(l1, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
+        vm.startPrank(l2);
+        pools.approve(l2, true);
+        markets.approve(l2, true);
+        pools.approve(address(this), true);
+        markets.approve(address(this), true);
+        vm.stopPrank();
     }
 
     // test liquidate taker long position 0
@@ -55,14 +110,15 @@ contract LiquidateUSDTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(usdPoolId, 1000227);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, p.margin, p.amount, p.value, 2412e16, -197181816e14, 200045454e12, 0);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, address(this), p.margin, p.amount, p.value, 2412e16, -197181816e14, 200045454e12, 0);
         (int256 marginBalance, , ) = markets.liquidate(usdPoolId, a2, address(this), true);
         vm.assertEq(marginBalance, 256456, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");
         vm.assertEq(im.poolBalances(usdPoolId), 1000227, "PBE");
         assertTakerPosition(usdPoolId, a2, true, 0, 0, 0, 0, 0);
-        vm.assertEq(usd.balanceOf(a2), 400e6+256456, "A2B");
-        vm.assertEq(usd.balanceOf(address(this)), balance0+1000227, "IMB");
+        // fund to plugin[this]
+        vm.assertEq(usd.balanceOf(a2), 400e6, "A2B");
+        vm.assertEq(usd.balanceOf(address(this)), balance0+1000227+256456, "IMB");
     }
 
     // test liquidate taker long position 1
@@ -102,7 +158,7 @@ contract LiquidateUSDTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(usdPoolId, 1000227);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, p.margin, p.amount, p.value, 2410e16, -197681816e14, 17571112736e10, 0);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, address(this), p.margin, p.amount, p.value, 2410e16, -197681816e14, 17571112736e10, 0);
         (int256 marginBalance, , ) = markets.liquidate(usdPoolId, a2, address(this), true);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");
@@ -146,7 +202,7 @@ contract LiquidateUSDTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceUsed(usdPoolId, 3168395);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, p.margin, p.amount, p.value, 0, -15076408960000000000000, 0, 176400000000000000000);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, true, address(this), p.margin, p.amount, p.value, 0, -15076408960000000000000, 0, 176400000000000000000);
         (int256 marginBalance, , ) = markets.liquidate(usdPoolId, a2, address(this), true);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");
@@ -213,14 +269,15 @@ contract LiquidateUSDTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(usdPoolId, 39612783);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, false, p.margin, p.amount, p.value, 1312e18, -11097732036e13, 79225566991e11, 2446458345e13);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, false, address(this), p.margin, p.amount, p.value, 1312e18, -11097732036e13, 79225566991e11, 2446458345e13);
         (int256 marginBalance, , ) = markets.liquidate(usdPoolId, a2, address(this), false);
         vm.assertEq(marginBalance, 40559304, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");
         vm.assertEq(im.poolBalances(usdPoolId), 39612783, "PBE");
         assertTakerPosition(usdPoolId, a2, false, 0, 0, 0, 0, 0);
-        vm.assertEq(usd.balanceOf(a2), 40559304, "A2B");
-        vm.assertEq(usd.balanceOf(address(this)), balance0+39612783, "IMB");
+        // fund to plugin[this]
+        vm.assertEq(usd.balanceOf(a2), 0, "A2B");
+        vm.assertEq(usd.balanceOf(address(this)), balance0+39612783+40559304, "IMB");
 
         vm.assertEq(pools.unsettledFundingPayment(usdPoolId), 0);
     }
@@ -259,7 +316,7 @@ contract LiquidateUSDTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceAdded(usdPoolId, 29707733);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, false, p.margin, p.amount, p.value, 99e19, -983813312e14, 462569008248e10, 1505233125e13);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, false, address(this), p.margin, p.amount, p.value, 99e19, -983813312e14, 462569008248e10, 1505233125e13);
         (int256 marginBalance, , ) = markets.liquidate(usdPoolId, a2, address(this), false);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");
@@ -299,7 +356,7 @@ contract LiquidateUSDTest is Init {
         vm.expectEmit(address(im));
         emit IInsuranceManager.InsuranceUsed(usdPoolId, 221530858);
         vm.expectEmit(address(markets));
-        emit IMarkets.LiquidatedPosition(usdPoolId, a2, false, p.margin, p.amount, p.value, 0, -2205813184e14, 0, 0);
+        emit IMarkets.LiquidatedPosition(usdPoolId, a2, false, address(this), p.margin, p.amount, p.value, 0, -2205813184e14, 0, 0);
         (int256 marginBalance, , ) = markets.liquidate(usdPoolId, a2, address(this), false);
         vm.assertEq(marginBalance, 0, "MBE");
         vm.assertEq(im.userBalances(address(this), address(usd)), 5e6, "UBE");
@@ -316,7 +373,7 @@ contract LiquidateUSDTest is Init {
         assertBrokePrice(usdPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(btcId, 130066e8);
-        pools.removeLiquidity(usdPoolId, 500000e20);
+        pools.removeLiquidity(usdPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(usdPoolId, address(this), false, false);
 
         
@@ -368,7 +425,7 @@ contract LiquidateUSDTest is Init {
         markets.liquidate(usdPoolId, t1, address(this), false);
 
         vm.startPrank(t1);
-        markets.decreasePosition(usdPoolId, false, 1e20);
+        markets.decreasePosition(usdPoolId, t1, false, 1e20);
         vm.stopPrank();
 
         vm.expectRevert(IPools.InsufficientLiquidity.selector);
@@ -388,7 +445,7 @@ contract LiquidateUSDTest is Init {
         assertBrokePrice(usdPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(btcId, 130066e8);
-        pools.removeLiquidity(usdPoolId, 500000e20);
+        pools.removeLiquidity(usdPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(usdPoolId, address(this), false, false);
 
         
@@ -457,7 +514,7 @@ contract LiquidateUSDTest is Init {
         assertBrokePrice(usdPoolId, address(this), false, false);
         vm.warp(block.timestamp+31 days);
         setPrice(btcId, 130066e8);
-        pools.removeLiquidity(usdPoolId, 500000e20);
+        pools.removeLiquidity(usdPoolId, address(this), 500000e20, address(this));
         assertBrokePrice(usdPoolId, address(this), false, false);
 
         
@@ -507,13 +564,12 @@ contract LiquidateUSDTest is Init {
         vm.assertEq(im.userBalances(address(this), address(usd)), 115e6);
     }
 
-    function assertPosition(bytes32 poolId, address maker, int256 amount, int256 value, int256 margin, uint256 increaseTime, bool initial) private view {
+    function assertPosition(bytes32 poolId, address maker, int256 amount, int256 value, int256 margin, uint256 increaseTime) private view {
         IPools.Position memory pos = pools.getPosition(poolId, maker);
         vm.assertEq(pos.amount, amount, "MPA");
         vm.assertEq(pos.margin, margin, "MPM");
         vm.assertEq(pos.value, value, "MPV");
         vm.assertEq(pos.increaseTime, increaseTime, "MPT");
-        vm.assertEq(pos.initial, initial, "MPI");
     }
 
     function assertGlobalPosition(bytes32 poolId, int256 amount, int256 value, int256 margin) private view {

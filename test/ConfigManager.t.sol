@@ -240,45 +240,67 @@ contract ConfigManagerTest is Test {
     }
 
     function testPair() public {
+        IMatchingEngine.TickConfig[] memory tickConfig = new IMatchingEngine.TickConfig[](7);
+        tickConfig[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});
+        tickConfig[1] = IMatchingEngine.TickConfig({usageRatio: 1e6, slippage: 5e4});
+        tickConfig[2] = IMatchingEngine.TickConfig({usageRatio: 5e6, slippage: 30e4});
+        tickConfig[3] = IMatchingEngine.TickConfig({usageRatio: 1e7, slippage: 65e4});
+        tickConfig[4] = IMatchingEngine.TickConfig({usageRatio: 2e7, slippage: 145e4});
+        tickConfig[5] = IMatchingEngine.TickConfig({usageRatio: 5e7, slippage: 420e4});
+        tickConfig[6] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 1e7});
+        cm.addTickConfig(tickConfig);
+        tickConfig[1] = IMatchingEngine.TickConfig({usageRatio: 1e6, slippage: 8e4});
+        tickConfig[2] = IMatchingEngine.TickConfig({usageRatio: 5e6, slippage: 44e4});
+        tickConfig[3] = IMatchingEngine.TickConfig({usageRatio: 1e7, slippage: 94e4});
+        tickConfig[4] = IMatchingEngine.TickConfig({usageRatio: 2e7, slippage: 210e4});
+        tickConfig[5] = IMatchingEngine.TickConfig({usageRatio: 5e7, slippage: 600e4});
+        tickConfig[6] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 15e6});
+        cm.addTickConfig(tickConfig);
+
         // notGov
         vm.startPrank(a2);
         vm.expectRevert(Governable.notGov.selector);
-        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle), 1);
         vm.expectRevert(Governable.notGov.selector);
-        cm.updatePair("ETH/USD", 1e6, 5e5, ethFeedId, 2e7, 1e16, address(ethOracle));
+        cm.updatePair("ETH/USD", 1e6, 5e5, ethFeedId, 2e7, 1e16, address(ethOracle), 1);
         vm.stopPrank();
 
         
         vm.expectRevert(abi.encodeWithSelector(IPriceHelper.ErrorPrice.selector, 0));
-        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(ethOracle));
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(ethOracle), 1);
         vm.expectRevert(abi.encodeWithSelector(IPriceHelper.ErrorPrice.selector, 0));
-        cm.updatePair("ETH/USD", 1e6, 5e5, ethFeedId, 2e7, 1e16, address(ethOracle));
+        cm.updatePair("ETH/USD", 1e6, 5e5, ethFeedId, 2e7, 1e16, address(ethOracle), 1);
 
         vm.expectRevert(IConfigManager.InvalidIM.selector);
-        cm.updatePair("BTC/USD", 1e5-1, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e5-1, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle), 1);
         vm.expectRevert(IConfigManager.InvalidIM.selector);
-        cm.updatePair("BTC/USD", 1e7+1, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e7+1, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle), 1);
 
         vm.expectRevert(IConfigManager.InvalidMM.selector);
-        cm.updatePair("BTC/USD", 1e6, 1e6/5-1, btcFeedId, 2e7, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e6, 1e6/5-1, btcFeedId, 2e7, 1e15, address(btcOracle), 1);
         vm.expectRevert(IConfigManager.InvalidMM.selector);
-        cm.updatePair("BTC/USD", 1e6, 1e6/2+1, btcFeedId, 2e7, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e6, 1e6/2+1, btcFeedId, 2e7, 1e15, address(btcOracle), 1);
         
         vm.expectRevert(IConfigManager.InvalidReserveRatio.selector);
-        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 1e7-1, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 1e7-1, 1e15, address(btcOracle), 1);
         vm.expectRevert(IConfigManager.InvalidReserveRatio.selector);
-        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 5e7+1, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 5e7+1, 1e15, address(btcOracle), 1);
 
         vm.expectRevert(IConfigManager.InvalidDust.selector);
-        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15-1, address(btcOracle));
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15-1, address(btcOracle), 1);
+
+        vm.expectRevert(IConfigManager.InvalidTickConfigId.selector);
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle), 0);
+        vm.expectRevert(IConfigManager.InvalidTickConfigId.selector);
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle), 3);
 
         updatePrice();
         bytes32 btcPairId = keccak256(abi.encode("BTC/USD"));
         IConfigManager.PairConfig memory config;
         bytes32[] memory pairList;
         vm.expectEmit(address(cm));
-        emit IConfigManager.UpdatedPair(btcPairId, 1e6, 5e5, btcFeedId, 2e7, 1e15, "BTC/USD");
-        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle));
+        emit IConfigManager.UpdatedPair(btcPairId, 1e6, 5e5, btcFeedId, 2e7, 1e15, "BTC/USD", 1);
+        cm.updatePair("BTC/USD", 1e6, 5e5, btcFeedId, 2e7, 1e15, address(btcOracle), 1);
         pairList = cm.pairsList();
         vm.assertEq(pairList.length, 1);
         config = cm.getPairConfig(btcPairId);
@@ -289,8 +311,9 @@ contract ConfigManagerTest is Test {
         vm.assertEq(config.reserveRatio, 2e7);
         vm.assertEq(config.dust, 1e15);
         vm.assertEq(config.pair, "BTC/USD");
+        vm.assertEq(config.tickConfigId, 1);
 
-        cm.updatePair("BTC/USD", 5e6, 2e6, btcFeedId, 3e7, 1e15, address(btcOracle));
+        cm.updatePair("BTC/USD", 5e6, 2e6, btcFeedId, 3e7, 1e15, address(btcOracle), 1);
         pairList = cm.pairsList();
         vm.assertEq(pairList.length, 1);
         config = cm.getPairConfig(btcPairId);
@@ -301,12 +324,13 @@ contract ConfigManagerTest is Test {
         vm.assertEq(config.reserveRatio, 3e7);
         vm.assertEq(config.dust, 1e15);
         vm.assertEq(config.pair, "BTC/USD");
+        vm.assertEq(config.tickConfigId, 1);
 
 
         bytes32 ethPairId = keccak256(abi.encode("ETH/USD"));
         vm.expectEmit(address(cm));
-        emit IConfigManager.UpdatedPair(ethPairId, 1e6, 5e5, ethFeedId, 2e7, 1e16, "ETH/USD");
-        cm.updatePair("ETH/USD", 1e6, 5e5, ethFeedId, 2e7, 1e16, address(ethOracle));
+        emit IConfigManager.UpdatedPair(ethPairId, 1e6, 5e5, ethFeedId, 2e7, 1e16, "ETH/USD", 2);
+        cm.updatePair("ETH/USD", 1e6, 5e5, ethFeedId, 2e7, 1e16, address(ethOracle), 2);
         pairList = cm.pairsList();
         vm.assertEq(pairList.length, 2);
         config = cm.getPairConfig(ethPairId);
@@ -317,8 +341,9 @@ contract ConfigManagerTest is Test {
         vm.assertEq(config.reserveRatio, 2e7);
         vm.assertEq(config.dust, 1e16);
         vm.assertEq(config.pair, "ETH/USD");
+        vm.assertEq(config.tickConfigId, 2);
 
-        cm.updatePair("ETH/USD", 5e6, 2e6, ethFeedId, 3e7, 1e16, address(ethOracle));
+        cm.updatePair("ETH/USD", 5e6, 2e6, ethFeedId, 3e7, 1e16, address(ethOracle), 2);
         pairList = cm.pairsList();
         vm.assertEq(pairList.length, 2);
         config = cm.getPairConfig(ethPairId);
@@ -329,6 +354,7 @@ contract ConfigManagerTest is Test {
         vm.assertEq(config.reserveRatio, 3e7);
         vm.assertEq(config.dust, 1e16);
         vm.assertEq(config.pair, "ETH/USD");
+        vm.assertEq(config.tickConfigId, 2);
     }
 
     function updatePrice() private {
@@ -366,10 +392,10 @@ contract ConfigManagerTest is Test {
         vm.expectRevert(IConfigManager.InvalidTickConfig.selector);
         cm.addTickConfig(config1);
         
-        vm.expectRevert(IConfigManager.InvalidId.selector);
+        vm.expectRevert(IConfigManager.InvalidTickConfigId.selector);
         cm.updateTickConfig(0, config1);
 
-        vm.expectRevert(IConfigManager.InvalidId.selector);
+        vm.expectRevert(IConfigManager.InvalidTickConfigId.selector);
         cm.updateTickConfig(1, config1);
 
         MatchingEngine.TickConfig[] memory config2 = new MatchingEngine.TickConfig[](3);

@@ -32,7 +32,6 @@ interface IPools {
         int256 amount;
         int256 value;
         uint256 increaseTime;
-        bool initial;
     }
 
     struct PoolInfo {
@@ -111,7 +110,7 @@ interface IPools {
     error SwapPaused();
 
     event SetConfig(address markets, address ConfigManager, address priceHelper, address matchingEngine, address insurance, address WETH, address staker, int256 fundingCalcInterval);
-    event CreatedPool(bytes32 poolId, PoolConfig config, int256 addAmount, uint8 tickConfigId);
+    event CreatedPool(bytes32 poolId, PoolConfig config);
     event UpdatedPausedStatus(bytes32 poolId, bool addPaused, bool removePaused, bool liquidatePaused, bool globalPaused);
     event UpdatedPoolConfig(bytes32 poolId, PoolConfig config);
     event AddedMargin(address maker, bytes32 poolId, int256 margin);
@@ -132,7 +131,6 @@ interface IPools {
     function getPoolConfig(bytes32 poolId) external view returns(PoolConfig memory config);
     function getPosition(bytes32 poolId, address maker) external view returns(Position memory position);
     function getNetValue(bytes32 poolId) external view returns(int256);
-    function getOraclePrice(bytes32 poolId) external view returns(int256 price);
     function getIndexPrice(bytes32 poolId) external view returns(int256 price);
     function getMarketPrice(bytes32 poolId, int256 indexPrice) external view returns(int256);
     function trade(TradeParams memory params) external returns(TradeResult memory result);
