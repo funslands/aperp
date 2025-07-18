@@ -62,7 +62,7 @@ interface ITakerPlugin {
     event CreatedTpSl(bytes32 indexed marketId, address indexed taker, bool direction, int8 triggerType, uint256 amount, uint256 orderId, uint256 executionFee, uint256 deadline, uint256 tp, uint256 sl);
     event UpdatedTpSl(address indexed taker, uint256 orderId, uint256 tp, uint256 sl, uint256 deadline);
     event CanceledOrder(address indexed taker, uint256 indexed orderId, bool isConditional);
-    event ExecutedOrder(bytes32 indexed marketId, address indexed executor, address indexed taker, bool isConditional, uint256 orderId, int8 orderType, uint256 executionFee, int8 triggerType, uint256 price);
+    event ExecutedOrder(bytes32 indexed marketId, address indexed executor, address indexed taker, bool isConditional, uint256 orderId, int8 orderType, uint256 executionFee, int8 triggerType, int8 orderStatus, uint256 price);
 
     function executedOrderPosition() external view returns(uint256);
     function getOrderNum(bool isConditional) external view returns(uint256);

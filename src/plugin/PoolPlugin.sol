@@ -367,7 +367,7 @@ contract PoolPlugin is IPoolPlugin, ReentrancyGuard {
             sendEth(order.content.maker, false, order.content.executionFee - vars.maxGas);
         }
 
-        emit ExecutedOrder(order.content.poolId, msg.sender, order.content.maker, isConditional, orderId+1, order.orderType, order.content.executionFee, vars.price);
+        emit ExecutedOrder(order.content.poolId, msg.sender, order.content.maker, isConditional, orderId+1, order.orderType, order.status, order.content.executionFee, vars.price);
     }
 
     function executeOrder(uint256 executeNum) public override returns(uint8[] memory results) {

@@ -20,28 +20,12 @@ contract MatchingEngineTest is Test {
 
     function updateConfig() private {
         MatchingEngine.TickConfig[] memory config = new MatchingEngine.TickConfig[](6);
-
-        MatchingEngine.TickConfig memory c1;
-        MatchingEngine.TickConfig memory c2;
-        MatchingEngine.TickConfig memory c3;
-        MatchingEngine.TickConfig memory c4;
-        MatchingEngine.TickConfig memory c5;
-        
-        c1.usageRatio = 1e5; // 0.1%
-        c1.slippage = 5e4;   // 0.05%
-        c2.usageRatio = 5e6; // 5%
-        c2.slippage = 1e5;   // 0.1%
-        c3.usageRatio = 2e7; // 20%
-        c3.slippage = 5e5;   // 0.5%
-        c4.usageRatio = 6e7; // 60%
-        c4.slippage = 3e6;   // 3%
-        c5.usageRatio = 1e8; // 100%
-        c5.slippage = 1e7;   // 10%
-        config[1] = c1;
-        config[2] = c2;
-        config[3] = c3;
-        config[4] = c4;
-        config[5] = c5;
+        config[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});       // 0    0
+        config[1] = IMatchingEngine.TickConfig({usageRatio: 1e5, slippage: 5e4});   // 0.1%  0.05%
+        config[2] = IMatchingEngine.TickConfig({usageRatio: 5e6, slippage: 1e5});   // 5%   0.1%
+        config[3] = IMatchingEngine.TickConfig({usageRatio: 2e7, slippage: 5e5});   // 20%  0.5%
+        config[4] = IMatchingEngine.TickConfig({usageRatio: 6e7, slippage: 3e6});   // 60%  3%
+        config[5] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 1e7});   // 100% 10%
 
         me.updateTickConfig(poolId, config);
     }
@@ -183,21 +167,27 @@ contract MatchingEngineTest is Test {
         config2[1] = c1;
         config2[2] = c2;
         me.updateTickConfig(poolId, config2);
+        assertTickConfig(poolId, config2);
+
+        IMatchingEngine.TickConfig[] memory config3 = new IMatchingEngine.TickConfig[](7);
+        config3[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});
+        config3[1] = IMatchingEngine.TickConfig({usageRatio: 1e6, slippage: 5e4});
+        config3[2] = IMatchingEngine.TickConfig({usageRatio: 5e6, slippage: 30e4});
+        config3[3] = IMatchingEngine.TickConfig({usageRatio: 1e7, slippage: 65e4});
+        config3[4] = IMatchingEngine.TickConfig({usageRatio: 2e7, slippage: 145e4});
+        config3[5] = IMatchingEngine.TickConfig({usageRatio: 5e7, slippage: 420e4});
+        config3[6] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 1e7});
+        me.updateTickConfig(poolId, config3);
+        assertTickConfig(poolId, config3);
 
 
-        MatchingEngine.TickConfig memory c3;
-        c1.usageRatio = 1e7;
-        c1.slippage = 1e6;
-        c1.usageRatio = 3e7;
-        c1.slippage = 3e6;
-        c3.usageRatio = Constant.BASIS_POINTS_DIVISOR;
-        c3.slippage = 1e7;
-
-        MatchingEngine.TickConfig[] memory config3 = new MatchingEngine.TickConfig[](4);
-        config3[1] = c1;
-        config3[2] = c2;
-        config3[3] = c3;
-        me.updateTickConfig(poolId, config2);
+        MatchingEngine.TickConfig[] memory config4 = new MatchingEngine.TickConfig[](4);
+        config4[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});
+        config4[1] = IMatchingEngine.TickConfig({usageRatio: 1e7, slippage: 1e6});
+        config4[2] = IMatchingEngine.TickConfig({usageRatio: 3e7, slippage: 3e6});
+        config4[3] = IMatchingEngine.TickConfig({usageRatio: Constant.BASIS_POINTS_DIVISOR, slippage: 1e7});
+        me.updateTickConfig(poolId, config4);
+        assertTickConfig(poolId, config4);
     }
 
     function testUpdateFund() public {
@@ -225,7 +215,7 @@ contract MatchingEngineTest is Test {
 
     function testMatching0() public {
         updateConfig();
-        int256 price = 2000e10; // 1000$
+        int256 price = 2000e10; // 2000$
         int256 makerFund = 100000000e20; // 100m USD
         vm.startPrank(pools);
         me.updateFund(poolId, makerFund, price);
@@ -291,44 +281,50 @@ contract MatchingEngineTest is Test {
 
 
         MatchingEngine.TickConfig[] memory config = new MatchingEngine.TickConfig[](6);
-
-        MatchingEngine.TickConfig memory c1;
-        MatchingEngine.TickConfig memory c2;
-        MatchingEngine.TickConfig memory c3;
-        MatchingEngine.TickConfig memory c4;
-        MatchingEngine.TickConfig memory c5;
-        
-        c1.usageRatio = 5e5; // 0.5%
-        c1.slippage = 5e4;   // 0.05%
-        c2.usageRatio = 1e7; // 10%
-        c2.slippage = 1e5;   // 0.1%
-        c3.usageRatio = 3e7; // 30%
-        c3.slippage = 5e5;   // 0.5%
-        c4.usageRatio = 6e7; // 60%
-        c4.slippage = 3e6;   // 3%
-        c5.usageRatio = 1e8; // 100%
-        c5.slippage = 1e7;   // 10%
-        config[1] = c1;
-        config[2] = c2;
-        config[3] = c3;
-        config[4] = c4;
-        config[5] = c5;
-
+        config[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});       // 0    0
+        config[1] = IMatchingEngine.TickConfig({usageRatio: 5e5, slippage: 5e4});   // 0.5% 0.05%
+        config[2] = IMatchingEngine.TickConfig({usageRatio: 1e7, slippage: 1e5});   // 10%  0.1%
+        config[3] = IMatchingEngine.TickConfig({usageRatio: 3e7, slippage: 5e5});   // 30%  0.5%
+        config[4] = IMatchingEngine.TickConfig({usageRatio: 6e7, slippage: 3e6});   // 60%  3%
+        config[5] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 1e7});   // 100% 10%
         me.updateTickConfig(poolId, config);
-        assertPoolStatus(poolId, 3, -1190e20, 24791666, 395833);
+        assertPoolStatus(poolId, 4, -1190e20, 24791666, 799479);
 
 
         params.tradeAmount = -500e20;
-        assertMatching(params, 500e20, 198835e8, 99417535e18);
-        assertPoolStatus(poolId, 4, -1690e20, 35208333, 934027);
+        assertMatching(params, 500e20, 197750e8, 98875001e18);
+        assertPoolStatus(poolId, 4, -1690e20, 35208333, 1450520);
 
         params.tradeAmount = 1300e20;
-        assertMatching(params, 1300e20, 199974e8, 259966408e18);
-        assertPoolStatus(poolId, 2, -390e20, 8125000, 90131);
+        assertMatching(params, 1300e20, 199941e8, 259923413e18);
+        assertPoolStatus(poolId, 3, -390e20, 8125000, 249450);
 
 
         params.tradeAmount = 390e20;
-        assertMatching(params, 390e20, 200040e8, 78015640e18);
+        assertMatching(params, 390e20, 200032e8, 78012533e18);
+        assertPoolStatus(poolId, 0, 0, 0, 0);
+
+
+        params.tradeAmount = 1000e20;
+        assertMatching(params, 1000e20, 200286e8, 200286266e18);
+        assertPoolStatus(poolId, 3, 1000e20, 20833333, 316666);
+
+        MatchingEngine.TickConfig[] memory config1 = new MatchingEngine.TickConfig[](6);
+        config1[0] = IMatchingEngine.TickConfig({usageRatio: 0, slippage: 0});       // 0    0
+        config1[1] = IMatchingEngine.TickConfig({usageRatio: 1e6, slippage: 5e4});   // 1%   0.05%
+        config1[2] = IMatchingEngine.TickConfig({usageRatio: 8e6, slippage: 1e5});   // 8%   0.1%
+        config1[3] = IMatchingEngine.TickConfig({usageRatio: 2e7, slippage: 5e5});   // 20%  0.5%
+        config1[4] = IMatchingEngine.TickConfig({usageRatio: 5e7, slippage: 3e6});   // 50%  3%
+        config1[5] = IMatchingEngine.TickConfig({usageRatio: 1e8, slippage: 1e7});   // 100% 10%
+        me.updateTickConfig(poolId, config1);
+        assertPoolStatus(poolId, 4, 1000e20, 20833333, 316666);
+
+        params.tradeAmount = -980e20;
+        assertMatching(params, 980e20, 199970e8, 195971435e18);
+        assertPoolStatus(poolId, 1, 20e20, 416666, 41666);
+
+        params.tradeAmount = -20e20;
+        assertMatching(params, 20e20, 199988e8, 3999772e18);
         assertPoolStatus(poolId, 0, 0, 0, 0);
     }
 
@@ -338,9 +334,18 @@ contract MatchingEngineTest is Test {
         vm.assertLe(price, p+1e8);
     }
 
+    function assertTickConfig(bytes32 pId, IMatchingEngine.TickConfig[] memory c1) public view {
+        IMatchingEngine.TickAmount[] memory c2 = me.getPoolConf(pId);
+        vm.assertEq(c1.length, c2.length, "TCL");
+        for (uint256 index = 0; index < c1.length; index++) {
+            vm.assertEq(c1[index].usageRatio, c2[index].usageRatio, "TCS");
+            vm.assertEq(c1[index].slippage, c2[index].slippage, "TCS");
+        }
+    }
+
 
     function assertPoolStatus(bytes32 pId, uint256 currentTick, int256 position, int256 usageRatio, int256 slippage) public view {
-        IMatchingEngine.TickStatus memory status = me.getStatus(pId);
+        IMatchingEngine.PoolStatus memory status = me.getStatus(pId);
         vm.assertEq(status.currentTick, currentTick, "PSCT");
         vm.assertGe(status.position, position, "PSPG");
         vm.assertLt(status.position, position+1e19, "PSPL");

@@ -13,7 +13,7 @@ interface IMatchingEngine {
         int256 amount;
     }
 
-    struct TickStatus {
+    struct PoolStatus {
         uint256 currentTick;
         int256 makerAmount;
         int256 usageRatio;
@@ -39,7 +39,7 @@ interface IMatchingEngine {
     event UpdatedFund(bytes32 poolId, int256 amount, int256 price);
 
 
-    function getStatus(bytes32 poolId) external view returns(TickStatus memory status);
+    function getStatus(bytes32 poolId) external view returns(PoolStatus memory status);
     function updateFund(bytes32 poolId, int256 amount, int256 price) external;
 
     function checkTickConfig(TickConfig[] memory config) external view returns(bool);

@@ -404,7 +404,7 @@ contract TakerPlugin is ITakerPlugin, ReentrancyGuard {
             sendEth(increaseParams.taker, false, order.content.executionFee-vars.maxGas);
         }
 
-        emit ExecutedOrder(increaseParams.marketId, msg.sender, increaseParams.taker, isConditional, orderId+1, order.orderType, order.content.executionFee, order.triggerType, vars.price);
+        emit ExecutedOrder(increaseParams.marketId, msg.sender, increaseParams.taker, isConditional, orderId+1, order.orderType, order.content.executionFee, order.triggerType, order.status, vars.price);
     }
 
     function executeOrder(uint256 executeNum) public override returns(uint8[] memory results) {

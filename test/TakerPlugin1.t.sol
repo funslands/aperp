@@ -239,7 +239,7 @@ contract TakerPlugin1Test is Init {
             ids[2] = 4;
             ids[3] = 2;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 1, 1, 1e14, 0, 1998e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 1, 1, 1e14, 0, 1, 1998e10);
             results = updatePriceAndExecuteConditionalOrder(ids, 80000e8, 1998e8, false);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 6);
@@ -257,7 +257,7 @@ contract TakerPlugin1Test is Init {
             ids[2] = 4;
             ids[3] = 3;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(t0), address(t2), true, 3, 1, 1e14, 1, 20149830000000);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(t0), address(t2), true, 3, 1, 1e14, 1, 1, 20149830000000);
             results = tp.executeConditionalOrder(ids);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 6);
@@ -314,7 +314,7 @@ contract TakerPlugin1Test is Init {
             ids[3] = 2;
             vm.expectEmit(address(tp));
             emit ITakerPlugin.CreatedTpSl(ethPoolId, address(t1), false, 0, 8e20, 7, 1e14, block.timestamp + 30 days, 1960e10, 2060e10);
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 5, 1, 1e14, 0, 2020e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 5, 1, 1e14, 0, 1, 2020e10);
             results = tp.executeConditionalOrder(ids);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 1);
@@ -335,7 +335,7 @@ contract TakerPlugin1Test is Init {
             ids[3] = 2;
             vm.expectEmit(address(tp));
             emit ITakerPlugin.CreatedTpSl(ethPoolId, address(t2), true, 1, 4e20, 8, 1e14, block.timestamp + 30 days, 1e28, 1920e10);
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 6, 1, 1e14, 1, 19721933468097);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 6, 1, 1e14, 1, 1, 19721933468097);
             results = tp.executeConditionalOrder(ids);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 3);
@@ -365,7 +365,7 @@ contract TakerPlugin1Test is Init {
             ids[0] = 2;
             vm.expectEmit(address(tp));
             emit ITakerPlugin.CreatedTpSl(ethPoolId, address(t1), true, 0, 7e20, 9, 1e14, block.timestamp + 30 days, 2050e10, 0);
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 2, 1, 1e14, 0, 1990e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 2, 1, 1e14, 0, 1, 1990e10);
             results = tp.executeConditionalOrder(ids);
             vm.assertEq(results.length, 1);
             vm.assertEq(results[0], 1);
@@ -381,7 +381,7 @@ contract TakerPlugin1Test is Init {
             ids[0] = 4;
             vm.expectEmit(address(tp));
             emit ITakerPlugin.CreatedTpSl(ethPoolId, address(t2), false, 0, 9e20, 10, 1e14, block.timestamp + 30 days, 1920e10, 2070e10);
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 4, 1, 1e14, 0, 2060e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 4, 1, 1e14, 0, 1, 2060e10);
             results = updatePriceAndExecuteConditionalOrder(ids, 80000e8, 2060e8, false);
             vm.assertEq(results.length, 1);
             vm.assertEq(results[0], 1);
@@ -415,8 +415,8 @@ contract TakerPlugin1Test is Init {
             ids[2] = 9;
             ids[3] = 10;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 8, 3, 1e14, 1, 19174550000000);
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 7, 3, 1e14, 0, 1930e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 8, 3, 1e14, 1, 1, 19174550000000);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 7, 3, 1e14, 0, 1, 1930e10);
             results = tp.executeConditionalOrder(ids);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 1);
@@ -438,7 +438,7 @@ contract TakerPlugin1Test is Init {
             ids[2] = 9;
             ids[3] = 10;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 9, 3, 1e14, 0, 2061e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 9, 3, 1e14, 0, 1, 2061e10);
             results = updatePriceAndExecuteConditionalOrder(ids, 80000e8, 2061e8, false);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 3);
@@ -460,7 +460,7 @@ contract TakerPlugin1Test is Init {
             ids[2] = 9;
             ids[3] = 10;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 10, 3, 1e14, 0, 2071e10);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 10, 3, 1e14, 0, 1, 2071e10);
             results = updatePriceAndExecuteConditionalOrder(ids, 80000e8, 2071e8, false);
             vm.assertEq(results.length, 4);
             vm.assertEq(results[0], 3);
@@ -514,7 +514,7 @@ contract TakerPlugin1Test is Init {
             ids[0] = 11;
             ids[1] = 12;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 12, 2, 1e14, 0, 19200000000000);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 12, 2, 1e14, 0, 1, 19200000000000);
             results = tp.executeConditionalOrder(ids);
             vm.assertEq(results.length, 2);
             vm.assertEq(results[0], 6);
@@ -531,7 +531,7 @@ contract TakerPlugin1Test is Init {
             ids[0] = 11;
             ids[1] = 12;
             vm.expectEmit(address(tp));
-            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 11, 2, 1e14, 1, 20573400000000);
+            emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 11, 2, 1e14, 1, 1, 20573400000000);
             results = updatePriceAndExecuteConditionalOrder(ids, 80000e8, 2040e8, false);
             vm.assertEq(results.length, 2);
             vm.assertEq(results[0], 1);

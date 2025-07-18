@@ -616,8 +616,8 @@ contract LiquidateUSDTest is Init {
         vm.assertLt(pos.unsettledFundingPayment, ufp+100, "TPUL");
     }
 
-    function assertTickStatus(bytes32 poolId, int256 makerAmount, int256 position) public view {
-        IMatchingEngine.TickStatus memory s = me.getStatus(poolId);
+    function assertMEPoolStatus(bytes32 poolId, int256 makerAmount, int256 position) public view {
+        IMatchingEngine.PoolStatus memory s = me.getStatus(poolId);
         vm.assertGe(s.makerAmount, makerAmount, "TSAG");
         vm.assertLt(s.makerAmount, makerAmount+1e18, "TSAL");
         vm.assertGe(s.position, position, "TSPG");

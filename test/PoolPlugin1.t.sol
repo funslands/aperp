@@ -263,8 +263,8 @@ contract PoolPluginTest is Init {
         ids[2] = 1;
         vm.expectEmit(address(pp));
         emit IPoolPlugin.CreatedTpSl(ethPoolId, address(t2), 10e20, 5, 1e14, block.timestamp + 30 days, 1201e7, 900e7);
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 2, 1, 1e14, 9479495736);
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 1, 1, 1e14, 9479495736);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 2, 1, 1, 1e14, 9479495736);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 1, 1, 1, 1e14, 9479495736);
         results = updatePriceAndExecuteConditionalOrder(ids, 80100e8, 2300e8, false);
         vm.assertEq(results.length, 3);
         vm.assertEq(results[0], 1);
@@ -309,7 +309,7 @@ contract PoolPluginTest is Init {
         vm.warp(1740801100);
         setPrice(ethId, 700e8);
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 1, 2, 1e14, 11765249674);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 1, 2, 1, 1e14, 11765249674);
         updatePriceAndExecuteOrder(10, 83000e8, 700e8, false);
 
         setPrice(ethId, 700e8);
@@ -317,7 +317,7 @@ contract PoolPluginTest is Init {
         ids[1] = 3;
         ids[2] = 5;
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(t4), address(t1), true, 6, 2, 1e14, 11768480443);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(t4), address(t1), true, 6, 2, 1, 1e14, 11768480443);
         vm.startPrank(address(t4));
         results = updatePriceAndExecuteConditionalOrder(ids, 83000e8, 700e8, false);
         vm.stopPrank();
@@ -336,7 +336,7 @@ contract PoolPluginTest is Init {
 
         setPrice(ethId, 300e8);
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 5, 3, 1e14, 12438916341);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t2), true, 5, 3, 1, 1e14, 12438916341);
         results = updatePriceAndExecuteConditionalOrder(ids, 83000e8, 300e8, false);
         vm.assertEq(results[0], 3);
         vm.assertEq(results[1], 3);
@@ -373,7 +373,7 @@ contract PoolPluginTest is Init {
         ids[1] = 6;
         ids[2] = 5;
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 7, 1, 1e14, 10443116341);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 7, 1, 1, 1e14, 10443116341);
         results = updatePriceAndExecuteConditionalOrder(ids, 83000e8, 1300e8, false);
         vm.assertEq(results[0], 1);
         vm.assertEq(results[1], 3);
@@ -392,7 +392,7 @@ contract PoolPluginTest is Init {
 
         setPrice(ethId, 2000e8);
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 8, 3, 1e14, 9366256935);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), true, 8, 3, 1, 1e14, 9366256935);
         results = updatePriceAndExecuteConditionalOrder(ids, 83000e8, 2000e8, false);
         vm.assertEq(results[0], 1);
         vm.assertEq(results[1], 3);

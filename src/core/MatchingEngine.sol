@@ -10,7 +10,7 @@ contract MatchingEngine is IMatchingEngine, Governable {
     // poolId => ticks
     mapping (bytes32=> TickAmount[]) public ticks;
     // poolId => status
-    mapping (bytes32=> TickStatus) public status;
+    mapping (bytes32=> PoolStatus) public status;
 
     modifier onlyPools() {
         require(msg.sender == pools, OnlyPools());
@@ -52,46 +52,62 @@ contract MatchingEngine is IMatchingEngine, Governable {
             InvalidCall()
         );
         require(checkTickConfig(config), InvalidTickConfig());
-        uint256 length = config.length;
-        if (ticks[poolId].length > 0) {
-            delete ticks[poolId];
-        }
+        uint256 ln = config.length;
+        uint256 lo = ticks[poolId].length;
+        uint256 len = ln > lo ? ln : lo;
 
-        TickStatus memory s = status[poolId];
+        PoolStatus memory s = status[poolId];
         int256 tickAmount = 0;
-        for (uint256 i = 0; i < length; i++) {
-            if (s.makerAmount > 0) {
-                tickAmount = s.makerAmount * config[i].usageRatio / Constant.BASIS_POINTS_DIVISOR;
+        for (uint256 i = 0; i < len; i++) {
+            if (ln<=i) {
+                ticks[poolId].pop();
             }
-            TickAmount memory tick = TickAmount({
-                usageRatio: config[i].usageRatio,
-                slippage: config[i].slippage,
-                amount: tickAmount
-            });
-            ticks[poolId].push(tick);
+            else {
+                if (i<s.currentTick) {
+                    if (i<lo) tickAmount = ticks[poolId][i].amount;
+                }
+                else {
+                    if (s.makerAmount > 0) {
+                        tickAmount = s.makerAmount * config[i].usageRatio / Constant.BASIS_POINTS_DIVISOR;
+                    }
+                }
+                TickAmount memory tick = TickAmount({
+                    usageRatio: config[i].usageRatio,
+                    slippage: config[i].slippage,
+                    amount: tickAmount
+                });
+                if (i<lo) ticks[poolId][i] = tick;
+                else ticks[poolId].push(tick);
+            }
+            
+            
         }
-        status[poolId] = calcStatus(poolId, s.position, s.makerAmount);
+        PoolStatus memory result = calcStatus(poolId, s.position, s.makerAmount);
+        if (result.currentTick > s.currentTick) s.currentTick = result.currentTick;
+        s.makerAmount = result.makerAmount;
+
+        status[poolId] = s;
 
         emit UpdatedPool(poolId, config);
     }
 
-    function getStatus(bytes32 poolId) public view override returns(TickStatus memory) {
+    function getStatus(bytes32 poolId) public view override returns(PoolStatus memory) {
         return status[poolId];
     }
 
     function updateFund(bytes32 poolId, int256 amount, int256 price) public override onlyPools {
         uint256 len = ticks[poolId].length;
         require(len > 2, InvalidPool());
-        TickStatus memory s = status[poolId];
+        PoolStatus memory s = status[poolId];
         int256 makerAmount = amount * Constant.PRICE_PRECISION / price;
         int256 p = abs(s.position);
         if (p > makerAmount) makerAmount = p;
         
-        for (uint256 i = 1; i < len; i++) {
+        for (uint256 i = s.currentTick; i < len; i++) {
             ticks[poolId][i].amount = makerAmount * ticks[poolId][i].usageRatio / Constant.BASIS_POINTS_DIVISOR;
         }
 
-        TickStatus memory result = calcStatus(poolId, s.position, makerAmount);
+        PoolStatus memory result = calcStatus(poolId, s.position, makerAmount);
         if (result.currentTick > s.currentTick) s.currentTick = result.currentTick;
         s.makerAmount = result.makerAmount;
         s.usageRatio = result.usageRatio;
@@ -106,7 +122,7 @@ contract MatchingEngine is IMatchingEngine, Governable {
     }
 
     function getMarketPrice(bytes32 poolId, int256 price) public override view returns(int256 marketPrice) {
-        TickStatus memory s = status[poolId];
+        PoolStatus memory s = status[poolId];
 
         if (s.slippage == 0) return price;
         if (s.position > 0)
@@ -120,6 +136,7 @@ contract MatchingEngine is IMatchingEngine, Governable {
         int256 tradeAmount;
         int256 positionAmount;
         int256 extraAmount;
+        uint256 initTick;
         TickAmount lastTick;
         TickAmount currentTick;
     }
@@ -127,7 +144,7 @@ contract MatchingEngine is IMatchingEngine, Governable {
         MatchingVars memory vars;
         vars.length = ticks[params.poolId].length;
 
-        TickStatus memory s = status[params.poolId];
+        PoolStatus memory s = status[params.poolId];
         StepResult memory result;
 
         vars.tradeAmount = params.tradeAmount > 0 ? params.tradeAmount : -params.tradeAmount;
@@ -155,10 +172,12 @@ contract MatchingEngine is IMatchingEngine, Governable {
                 s.position += params.tradeAmount;
                 
                 status[params.poolId] = calcStatus(params.poolId, s.position, s.makerAmount);
+                updateTickAmount(params.poolId, s.currentTick);
 
                 return (result.amount, result.value, result.value * Constant.PRICE_PRECISION / result.amount);
             }
             else {
+                vars.initTick = s.currentTick;
                 s.currentTick = 0;
                 vars.tradeAmount -= result.amount;
                 vars.lastTick = ticks[params.poolId][0];
@@ -171,6 +190,12 @@ contract MatchingEngine is IMatchingEngine, Governable {
             vars.lastTick.usageRatio = s.usageRatio;
             vars.lastTick.slippage = s.slippage;
             vars.lastTick.amount = vars.positionAmount;
+        }
+
+        if (vars.extraAmount != 0 && abs(vars.tradeAmount) >= abs(vars.extraAmount)) {
+            TickAmount memory tick = ticks[params.poolId][1];
+            tick.amount = s.makerAmount * tick.usageRatio / Constant.BASIS_POINTS_DIVISOR;
+            ticks[params.poolId][1] = tick;
         }
 
         if (s.currentTick == 0) s.currentTick = 1;
@@ -194,6 +219,7 @@ contract MatchingEngine is IMatchingEngine, Governable {
                     s.position += params.tradeAmount;
                     if (vars.extraAmount != 0) {
                         status[params.poolId] = calcStatus(params.poolId, s.position, s.makerAmount);
+                        updateTickAmount(params.poolId, vars.initTick);
                     }
                     else {
                         s.currentTick = i;
@@ -242,7 +268,6 @@ contract MatchingEngine is IMatchingEngine, Governable {
                 result.slippage = params.currentTick.slippage - (params.currentTick.slippage - params.lastTick.slippage) * tradeRatio / Constant.BASIS_POINTS_DIVISOR;
                 avgSlippage = (result.slippage + params.currentTick.slippage) / 2;
             }
-
             
             result.complete = true;
         }
@@ -264,7 +289,7 @@ contract MatchingEngine is IMatchingEngine, Governable {
 
     }
 
-    function calcStatus(bytes32 poolId, int256 position, int256 makerAmount) private view returns(TickStatus memory s) {
+    function calcStatus(bytes32 poolId, int256 position, int256 makerAmount) private view returns(PoolStatus memory s) {
         s.makerAmount = makerAmount;
         int256 p = abs(position);
         if (p < 1e15) return s;
@@ -285,6 +310,19 @@ contract MatchingEngine is IMatchingEngine, Governable {
                 s.usageRatio = p * Constant.BASIS_POINTS_DIVISOR / makerAmount;
                 return s;
             }
+        }
+    }
+
+    function updateTickAmount(bytes32 poolId, uint256 currentTick) private {
+        PoolStatus memory s = status[poolId];
+        if (s.currentTick >= currentTick) return;
+        uint256 diff = currentTick-s.currentTick;
+        for (uint256 i=0; i<diff; i++) {
+            uint256 t = s.currentTick+i;
+            if (t == 0) continue;
+            TickAmount memory tick = ticks[poolId][t];
+            tick.amount = s.makerAmount * tick.usageRatio / Constant.BASIS_POINTS_DIVISOR;
+            ticks[poolId][t] = tick;
         }
     }
 

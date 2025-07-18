@@ -64,7 +64,7 @@ interface IPoolPlugin {
     event CreatedTpSl(bytes32 indexed poolId, address indexed maker, uint256 amount, uint256 orderId, uint256 executionFee, uint256 deadline, uint256 tp, uint256 sl);
     event UpdatedTpSl(address indexed maker, uint256 orderId, uint256 tp, uint256 sl, uint256 deadline);
     event CanceledOrder(address indexed maker, uint256 orderId, bool isConditional);
-    event ExecutedOrder(bytes32 poolId, address indexed executor, address indexed maker, bool indexed isConditional, uint256 orderId, int8 orderType, uint256 executionFee, uint256 netValue);
+    event ExecutedOrder(bytes32 poolId, address indexed executor, address indexed maker, bool indexed isConditional, uint256 orderId, int8 orderType, int8 orderStatus, uint256 executionFee, uint256 netValue);
 
     function executedOrderPosition() external view returns(uint256);
     function getOrderNum(bool isConditional) external view returns(uint256);

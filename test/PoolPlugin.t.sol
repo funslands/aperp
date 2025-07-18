@@ -287,7 +287,7 @@ contract PoolPluginTest is Init {
 
         vm.warp(block.timestamp + 1);
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 1, 1, 2e14, 1e10);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 1, 1, 1, 2e14, 1e10);
         results = pp.executeOrder(1);
         vm.assertEq(results.length, 1);
         vm.assertEq(results[0], 1);
@@ -550,7 +550,7 @@ contract PoolPluginTest is Init {
         vm.assertEq(results[4], 1);
 
         vm.expectEmit(address(pp));
-        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 15, 2, 1e14, 1e10);
+        emit IPoolPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 15, 2, 1, 1e14, 1e10);
         results = updatePriceAndExecuteOrder(10, 80020e8, 2001e8, false);
         vm.assertEq(results.length, 1);
         vm.assertEq(results[0], 1);

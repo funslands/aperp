@@ -375,7 +375,7 @@ contract TakerPluginTest is Init {
 
         vm.warp(block.timestamp + 1);
         vm.expectEmit(address(tp));
-        emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 1, 1, 2e14, 0, 2000e10);
+        emit ITakerPlugin.ExecutedOrder(ethPoolId, address(this), address(t1), false, 1, 1, 2e14, 0, 1, 2000e10);
         emit ITakerPlugin.CreatedTpSl(ethPoolId, address(t1), true, 0, 5e20, 1, 1e14, 1740800001+30 days, 1e28, 1966e10);
         results = tp.executeOrder(1);
         vm.assertEq(results.length, 1);

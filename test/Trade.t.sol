@@ -296,7 +296,7 @@ contract TradeTest is Init {
         assertPoolStatus(usdPoolId, true, 0, 0, 0);
         assertFundInfo(usdPoolId, 88000e20, 88000e20, 110000e20);
         assertEq(pools.getNetValue(usdPoolId), 1e10); 
-        assertTickStatus(usdPoolId, 110e18, 0);
+        assertMEPoolStatus(usdPoolId, 110e18, 0);
 
         usd.approve(address(pools), 1e18);
         pools.updatePausedStatus(usdPoolId, false, false, false, true);
@@ -324,7 +324,7 @@ contract TradeTest is Init {
         assertPoolStatus(usdPoolId, true, 0, 0, 0);
         assertFundInfo(usdPoolId, 88000e20+4e23, 88000e20+4e23, 110000e20+5e23);
         assertEq(pools.getNetValue(usdPoolId), 1e10); 
-        assertTickStatus(usdPoolId, 115e18, 0);
+        assertMEPoolStatus(usdPoolId, 115e18, 0);
 
         
         vm.startPrank(a2);
@@ -351,7 +351,7 @@ contract TradeTest is Init {
         vm.assertEq(usd.balanceOf(a2), 50e6-25e5);
         assertPosition(usdPoolId, a2, 2500e20, 2500e20, 50e20, block.timestamp);
         assertGlobalPosition(usdPoolId, 110000e20+2500e20, 110000e20+2500e20, 110000e20+50e20);
-        assertTickStatus(usdPoolId, 1125e17, 0);
+        assertMEPoolStatus(usdPoolId, 1125e17, 0);
         vm.stopPrank();
 
         vm.warp(initTime + 7 days + 1);
@@ -363,7 +363,7 @@ contract TradeTest is Init {
         assertPosition(usdPoolId, a2, 0, 0, 0, initTime);
         assertGlobalPosition(usdPoolId, 110000e20, 110000e20, 110000e20);
         assertFundInfo(usdPoolId, 88000e20, 88000e20, 110000e20);
-        assertTickStatus(usdPoolId, 110e18, 0);
+        assertMEPoolStatus(usdPoolId, 110e18, 0);
         vm.stopPrank();
 
         
@@ -373,7 +373,7 @@ contract TradeTest is Init {
         assertPosition(usdPoolId, address(this), 0, 0, 0, initTime);
         assertGlobalPosition(usdPoolId, 0, 0, 0);
         assertFundInfo(usdPoolId, 0, 0, 0);
-        assertTickStatus(usdPoolId, 0, 0);
+        assertMEPoolStatus(usdPoolId, 0, 0);
     }
 
     function testBtcLiquidity() public {
@@ -383,7 +383,7 @@ contract TradeTest is Init {
         assertPoolStatus(btcPoolId, true, 0, 0, 0);
         assertFundInfo(btcPoolId, 16000e20, 16e19, 2e20);
         assertEq(pools.getNetValue(btcPoolId), 1e10); 
-        assertTickStatus(btcPoolId, 8e20, 0);
+        assertMEPoolStatus(btcPoolId, 8e20, 0);
 
         btc.approve(address(pools), 1e18);
 
@@ -413,7 +413,7 @@ contract TradeTest is Init {
         assertPoolStatus(btcPoolId, true, 0, 0, 0);
         assertFundInfo(btcPoolId, 164e22, 164e18, 2e20+5e18);
         assertEq(pools.getNetValue(btcPoolId), 1e10); 
-        assertTickStatus(btcPoolId, 82e19, 0);
+        assertMEPoolStatus(btcPoolId, 82e19, 0);
 
         
         vm.startPrank(a2);
@@ -440,7 +440,7 @@ contract TradeTest is Init {
         vm.assertEq(btc.balanceOf(a2), 5e6-25e3);
         assertPosition(btcPoolId, a2, 25e17, 25e17, 5e17, block.timestamp);
         assertGlobalPosition(btcPoolId, 2e20+25e17, 2e20+25e17, 2e20+5e17);
-        assertTickStatus(btcPoolId, 81e19, 0);
+        assertMEPoolStatus(btcPoolId, 81e19, 0);
         vm.stopPrank();
 
         vm.warp(initTime + 7 days + 1);
@@ -462,7 +462,7 @@ contract TradeTest is Init {
         assertPosition(btcPoolId, a2, 0, 0, 0, initTime);
         assertGlobalPosition(btcPoolId, 2e20, 2e20, 2e20);
         assertFundInfo(btcPoolId, 16000e20, 16e19, 2e20);
-        assertTickStatus(btcPoolId, 688172043010752688172, 0);
+        assertMEPoolStatus(btcPoolId, 688172043010752688172, 0);
 
         
         uint256 b = btc.balanceOf(address(this));
@@ -471,7 +471,7 @@ contract TradeTest is Init {
         assertPosition(btcPoolId, address(this), 0, 0, 0, initTime);
         assertGlobalPosition(btcPoolId, 0, 0, 0);
         assertFundInfo(btcPoolId, 0, 0, 0);
-        assertTickStatus(btcPoolId, 0, 0);
+        assertMEPoolStatus(btcPoolId, 0, 0);
     }
 
     function testTradeUsdLong() public {
@@ -484,7 +484,7 @@ contract TradeTest is Init {
         int256 usedValue = 0;
         vm.assertEq(pools.fundingRatioGrowthGlobal(usdPoolId), 0);
         usd.approve(address(markets), 1e18);
-        assertTickStatus(usdPoolId, 110e18, 0);
+        assertMEPoolStatus(usdPoolId, 110e18, 0);
 
         vm.startPrank(a2);
         usd.mint(a2, 1e12);
@@ -555,14 +555,14 @@ contract TradeTest is Init {
             assertPoolStatus(usdPoolId, true, 6e19, 4904402544000000000000000, 2000e20-1961761017600000000000);
             assertPoolStatus(usdPoolId, false, 0, 0, 0);
             assertGlobalPosition(usdPoolId, 110000e20, 110000e20+980880508800000000000, 110000e20+poolFee);
-            assertTickStatus(usdPoolId, 110e18, 6e19);
+            assertMEPoolStatus(usdPoolId, 110e18, 6e19);
         }
         
 
         vm.warp(block.timestamp + 1 days + 300);
         setPrice(btcId, 80010e8);
         assertMarketPrice(usdPoolId, 8379229e8);
-        assertTickStatus(usdPoolId, 110e18, 6e19);
+        assertMEPoolStatus(usdPoolId, 110e18, 6e19);
         
         unsettledFundingPayment = 36789974172000000000000;
         vm.expectEmit(address(pools));
@@ -573,7 +573,7 @@ contract TradeTest is Init {
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), unsettledFundingPayment);
             assertGlobalPosition(usdPoolId, 140000000e20+110000e20, 141801843246e17+110000e20+poolFee, 110000e20+10000000e20+poolFee);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee)*8/10, 141801843246e17+110000e20+poolFee-usedValue);
-            assertTickStatus(usdPoolId, 124984376952880889888763, 6e19);
+            assertMEPoolStatus(usdPoolId, 124984376952880889888763, 6e19);
         }
         
 
@@ -581,7 +581,7 @@ contract TradeTest is Init {
         setPrice(btcId, 80100e8);
         {
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), unsettledFundingPayment);
-            assertTickStatus(usdPoolId, 124984376952880889888763, 6e19);
+            assertMEPoolStatus(usdPoolId, 124984376952880889888763, 6e19);
             assertMarketPrice(usdPoolId, 8388654e8);
         }
 
@@ -605,7 +605,7 @@ contract TradeTest is Init {
         setPrice(btcId, 80150e8);
         {
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), unsettledFundingPayment);
-            assertTickStatus(usdPoolId, 124984376952880889888763, 26e19);
+            assertMEPoolStatus(usdPoolId, 124984376952880889888763, 26e19);
             assertMarketPrice(usdPoolId, 8394567e8);
             assertGlobalPosition(usdPoolId, 140000000e20+110000e20, 141801843246e17+110000e20+poolFee, 110000e20+10000000e20+poolFee);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee)*8/10, 141801843246e17+110000e20+poolFee-usedValue);
@@ -614,7 +614,7 @@ contract TradeTest is Init {
 
         vm.warp(block.timestamp + 6 days);
         setPrice(btcId, 80300e8);
-        assertTickStatus(usdPoolId, 124984376952880889888763, 26e19);
+        assertMEPoolStatus(usdPoolId, 124984376952880889888763, 26e19);
         assertMarketPrice(usdPoolId, 8410277e8);
 
         
@@ -629,7 +629,7 @@ contract TradeTest is Init {
             assertGlobalPosition(usdPoolId, 130000000e20+110000e20, 141801843246e17+110000e20+poolFee-10128529415e17, 1011000000e18-71428570e18+poolFee-poolPnl);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee-10128529415e17)*8/10, 141801843246e17+110000e20+poolFee-10128529415e17-usedValue);
             assertMarketPrice(usdPoolId, 8410277e8);
-            assertTickStatus(usdPoolId, 124533001245330012453300, 26e19);
+            assertMEPoolStatus(usdPoolId, 124533001245330012453300, 26e19);
         }
 
 
@@ -640,11 +640,11 @@ contract TradeTest is Init {
             margin: 20000e6,
             amount: 1e20
         }));
-        usedValue += 8054616261307000000000000;
-        poolFee += 16109232522614e8;
+        usedValue += 8054105647258000000000000;
+        poolFee += 16108211294516e8;
         {
-            assertTickStatus(usdPoolId, 124533001245330012453300, 16e19);
-            assertMarketPrice(usdPoolId, 8030515e8);
+            assertMEPoolStatus(usdPoolId, 124533001245330012453300, 16e19);
+            assertMarketPrice(usdPoolId, 8367652e8);
             assertGlobalPosition(usdPoolId, 130000000e20+110000e20, 141801843246e17+110000e20+poolFee-10128529415e17, 1011000000e18-71428570e18+poolFee-poolPnl);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee-10128529415e17)*8/10, 141801843246e17+110000e20+poolFee-10128529415e17-usedValue);
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), unsettledFundingPayment);
@@ -658,16 +658,16 @@ contract TradeTest is Init {
 
         vm.startPrank(a2);
         (marginBalance, , ) = markets.decreasePosition(usdPoolId, a2, true, 78e18);
-        poolFee += 2505340103587200000000/2;
+        poolFee += 2510505453121600000000/2;
         usedValue -= 6504716268720000000000000;
         settledFunding = unsettledFundingPayment * 3 / 10;
         unsettledFundingPayment -= settledFunding;
-        pnl = -241366009752000000000000;
+        pnl = -228452635916000000000000;
         vm.stopPrank();
         {
-            vm.assertEq(marginBalance, 2400553657);
-            assertTickStatus(usdPoolId, 124533001245330012453300, 82e18);
-            assertMarketPrice(usdPoolId, 8030264e8);
+            vm.assertEq(marginBalance, 2529635742);
+            assertMEPoolStatus(usdPoolId, 124533001245330012453300, 82e18);
+            assertMarketPrice(usdPoolId, 8367361e8);
             assertGlobalPosition(usdPoolId, 130000000e20+110000e20, 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding, 1011000000e18-71428570e18+poolFee-poolPnl-pnl);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding)*8/10, 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding-usedValue);
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), unsettledFundingPayment);
@@ -681,14 +681,14 @@ contract TradeTest is Init {
         markets.decreasePosition(usdPoolId, a1, true, 1e20);
 
         (marginBalance, , ) = markets.decreasePosition(usdPoolId, a1, false, 1e20);
-        poolFee += 160608510194e10;
-        usedValue -= 8054616261307000000000000;
-        pnl += 24190751607000000000000;
+        poolFee += 334701921444e10/2;
+        usedValue -= 8054105647258e12;
+        pnl += -313442388842e12;
         vm.stopPrank();
         {
-            vm.assertEq(marginBalance, 20177567348);
-            assertTickStatus(usdPoolId, 124533001245330012453300, 182e18);
-            assertMarketPrice(usdPoolId, 8030586e8);
+            vm.assertEq(marginBalance, 16799889496);
+            assertMEPoolStatus(usdPoolId, 124533001245330012453300, 182e18);
+            assertMarketPrice(usdPoolId, 8367735e8);
             assertGlobalPosition(usdPoolId, 130000000e20+110000e20, 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding, 1011000000e18-71428570e18+poolFee-poolPnl-pnl);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding)*8/10, 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding-usedValue);
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), unsettledFundingPayment);
@@ -697,15 +697,15 @@ contract TradeTest is Init {
 
         vm.startPrank(a2);
         (marginBalance, , ) = markets.decreasePosition(usdPoolId, a2, true, 182e18);
-        poolFee += 5845681460819200000000/2;
-        usedValue -= 15177671293680000000000000;
-        pnl += -563467641632000000000000;
+        poolFee += 5851817561389800000000/2;
+        usedValue -= 1517767129368e13;
+        pnl += -5481273902055e11;
         settledFunding += unsettledFundingPayment;
         unsettledFundingPayment = 0;
         vm.stopPrank();
         {
-            vm.assertEq(marginBalance, 5598490133);
-            assertTickStatus(usdPoolId, 124533001245330012453300, 0);
+            vm.assertEq(marginBalance, 5751831286);
+            assertMEPoolStatus(usdPoolId, 124533001245330012453300, 0);
             assertMarketPrice(usdPoolId, 80300e10);
             assertGlobalPosition(usdPoolId, 130000000e20+110000e20, 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding, 1011000000e18-71428570e18+poolFee-poolPnl-pnl);
             assertFundInfo(usdPoolId, 1e28, (141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding)*8/10, 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding-usedValue);
@@ -718,12 +718,12 @@ contract TradeTest is Init {
 
         vm.startPrank(a1);
         pools.removeLiquidity(usdPoolId, a1, 180000000e20, a1);
-        poolPnl += 745752042593822000000000;
+        poolPnl += 1054942742593822000000000;
         vm.stopPrank();
         {
-            assertTickStatus(usdPoolId, 111005778225134591282, 0);
+            assertMEPoolStatus(usdPoolId, 111008386327690234620, 0);
             assertMarketPrice(usdPoolId, 80300e10);
-            int256 pv = 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding-13168059788e18;
+            int256 pv = 141801843246e17+110000e20+poolFee-10128529415e17-pnl+settledFunding-13167314035957406178000000000-1054942742593822000000000;
             assertGlobalPosition(usdPoolId, 110000e20, pv, 1011000000e18-71428570e18-92857143e19+poolFee-poolPnl-pnl);
             assertFundInfo(usdPoolId, pv*8/10, pv*8/10, pv);
             vm.assertEq(pools.unsettledFundingPayment(usdPoolId), 0);
@@ -736,7 +736,7 @@ contract TradeTest is Init {
         setPrice(btcId, 80200e8);
         pools.removeLiquidity(usdPoolId, address(this), 100000000e20, address(this));
         {
-            assertTickStatus(usdPoolId, 0, 0);
+            assertMEPoolStatus(usdPoolId, 0, 0);
             assertMarketPrice(usdPoolId, 80200e10);
             assertGlobalPosition(usdPoolId, 0, 0, 0);
             assertPoolStatus(usdPoolId, true, 0, 0, 0);
@@ -760,7 +760,7 @@ contract TradeTest is Init {
         vm.assertEq(pools.fundingRatioGrowthGlobal(btcPoolId), 0);
         btc.approve(address(markets), 1e18);
         {
-            assertTickStatus(btcPoolId, 8e20, 0);
+            assertMEPoolStatus(btcPoolId, 8e20, 0);
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 0, 0, 0);
             assertGlobalPosition(btcPoolId, 2e20, 2e20, 2e20);
@@ -793,7 +793,7 @@ contract TradeTest is Init {
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 1e20, 1992040e17, 992031840000000000);
             assertFundInfo(btcPoolId, (20000e20+poolFee*10000)*8/10, (20e19+poolFee)*8/10, 2e20-usedValue+poolFee);
-            assertTickStatus(btcPoolId, 8e20, -1e20);
+            assertMEPoolStatus(btcPoolId, 8e20, -1e20);
             assertMarketPrice(btcPoolId, 1983e10);
         }
 
@@ -812,7 +812,7 @@ contract TradeTest is Init {
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 1e20, 1992040e17, 992031840000000000);
             assertFundInfo(btcPoolId, 1e26, (2e20+140101227952e17+poolFee)*8/10, 140101227952e17+2e20-usedValue+poolFee);
-            assertTickStatus(btcPoolId, 49875311720698254364000, -1e20);
+            assertMEPoolStatus(btcPoolId, 49875311720698254364000, -1e20);
             assertMarketPrice(btcPoolId, 198795e8);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), unsettledFundingPayment);
         }
@@ -834,7 +834,7 @@ contract TradeTest is Init {
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 1e20+120e20, 1992040e17+23762208936439999999999990, 992031840000000000+199049511642542400000);
             assertFundInfo(btcPoolId, 1e26, (2e20+140101227952e17+poolFee)*8/10, 140101227952e17+2e20+poolFee-usedValue);
-            assertTickStatus(btcPoolId, 49875311720698254364000, -121e20);
+            assertMEPoolStatus(btcPoolId, 49875311720698254364000, -121e20);
             assertMarketPrice(btcPoolId, 1968097e7);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), unsettledFundingPayment);
         }
@@ -844,43 +844,43 @@ contract TradeTest is Init {
         vm.startPrank(a2);
         (marginBalance, , ) = markets.decreasePosition(btcPoolId, a2, false, 115e20);
         unsettledFundingPayment = 414384582484024650;
-        poolFee += 459416383738002000;
-        pnl = -19757556222835426320;
+        poolFee += 918841204834200000/2;
+        pnl = -19778649618340426320;
         settledFunding = 7942370635015975350;
         usedValue -= 2277324362467159573679;
         vm.stopPrank();
         {
-            vm.assertEq(marginBalance, 1615033678);
+            vm.assertEq(marginBalance, 1614822660);
             assertTakerPosition(btcPoolId, a2, false, -6e20, 1188169311768404263200000, 9919416007529263830, -8000025750000000000, unsettledFundingPayment);
             assertTakerPosition(btcPoolId, a2, true, 0, 0, 0, 0, 0);
             assertGlobalPosition(btcPoolId, 2e20+140000000e20, 2e20+140101227952e17+poolFee-pnl+settledFunding, 2e20+10000000e20+poolFee-pnl);
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 6e20, 1188169311768404263200000, 9919416007529263830);
             assertFundInfo(btcPoolId, 1e26, (2e20+140101227952e17+poolFee-pnl+settledFunding)*8/10, 140101227952e17+2e20+poolFee-118816931176840426320-pnl+settledFunding);
-            assertTickStatus(btcPoolId, 49875311720698254364000, -6e20);
-            assertMarketPrice(btcPoolId, 1996747e7);
+            assertMEPoolStatus(btcPoolId, 49875311720698254364000, -6e20);
+            assertMarketPrice(btcPoolId, 1984173e7);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), unsettledFundingPayment);
         }
 
         // remove a1 all
         vm.startPrank(a1);
         (marginBalance, ) = pools.removeLiquidity(btcPoolId, a1, 170000000e20, a1);
-        poolPnl += 29400000000000000000;
+        poolPnl += 28e18;
         vm.stopPrank();
         {
-            vm.assertEq(marginBalance, 9859899066048000);
+            vm.assertEq(marginBalance, 9859899052048000);
             assertTakerPosition(btcPoolId, a2, false, -6e20, 1188169311768404263200000, 9919416007529263830, -8000025750000000000, unsettledFundingPayment);
             assertTakerPosition(btcPoolId, a2, true, 0, 0, 0, 0, 0);
-            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding, 2e20+poolFee-pnl-poolPnl);
+            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding, 2e20+poolFee-pnl-poolPnl);
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 6e20, 1188169311768404263200000, 9919416007529263830);
-            assertFundInfo(btcPoolId, 1593908572002665629350000, (2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding)*8/10, 140101227952e17+2e20+poolFee-usedValue-pnl-140101228246e17+settledFunding);
-            assertTickStatus(btcPoolId, 797752038039312126801, -6e20);
-            assertMarketPrice(btcPoolId, 1996747e7);
+            assertFundInfo(btcPoolId, 1605277352916018413350000, (2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding)*8/10, 140101227952e17+2e20+poolFee-usedValue-pnl-140101227952e17-28e18+settledFunding);
+            assertMEPoolStatus(btcPoolId, 803442118576585792467, -6e20);
+            assertMarketPrice(btcPoolId, 1984173e7);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), unsettledFundingPayment);
             vm.assertEq(btc.balanceOf(address(im)), 140101227952000);
             vm.assertEq(im.poolBalances(btcPoolId), 140101227952000);
-            vm.assertEq(btc.balanceOf(a1), 9859899066048000);
+            vm.assertEq(btc.balanceOf(a1), 9859899052048000);
         }
 
 
@@ -893,41 +893,41 @@ contract TradeTest is Init {
             margin: 6e7,
             amount: 3e20
         }));
-        poolFee += 11982883780338000;
-        unsettledFundingPayment += 16611113898e8; 
-        usedValue += 59914418901690000000;
+        poolFee += 23958226641048000/2;
+        unsettledFundingPayment += 16419629556e8; 
+        usedValue += 59895566602620000000;
         {
             assertTakerPosition(btcPoolId, a1, false, 0, 0, 0, 0, 0);
-            assertTakerPosition(btcPoolId, a1, true, 3e20, 599144189016900000000000, 5976034232439324000, -35685215580000000000, 0);
-            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding, 2e20+poolFee-pnl-poolPnl);
-            assertPoolStatus(btcPoolId, true, 3e20, 599144189016900000000000, 5976034232439324000);
+            assertTakerPosition(btcPoolId, a1, true, 3e20, 5989556660262e11, 5976041773358952000, -3536607501e10, 0);
+            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding, 2e20+poolFee-pnl-poolPnl);
+            assertPoolStatus(btcPoolId, true, 3e20, 5989556660262e11, 5976041773358952000);
             assertPoolStatus(btcPoolId, false, 6e20, 1188169311768404263200000, 9919416007529263830);
-            assertFundInfo(btcPoolId, 1594004435072908333350000, (2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding)*8/10, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding-usedValue);
-            assertTickStatus(btcPoolId, 797752038039312126801, -3e20);
-            assertMarketPrice(btcPoolId, 1935814e7); 
+            assertFundInfo(btcPoolId, 1605373185822582605350000, (2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding)*8/10, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding-usedValue);
+            assertMEPoolStatus(btcPoolId, 803442118576585792467, -3e20);
+            assertMarketPrice(btcPoolId, 1936302e7); 
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), unsettledFundingPayment);
         } 
 
         vm.startPrank(a2);
         (marginBalance, , ) = markets.decreasePosition(btcPoolId, a2, false, 10e20);
         vm.stopPrank();
-        poolFee += 48255208229477332/2;
-        pnl += -1821089396851573680;
+        poolFee += 48252761916456800/2;
+        pnl += -1814973614301575736;
         settledFunding += unsettledFundingPayment;
         unsettledFundingPayment = 0;
         usedValue -= 118816931176840426320;
         {
-            vm.assertEq(marginBalance, 59745754);
+            vm.assertEq(marginBalance, 59998420);
             assertTakerPosition(btcPoolId, a1, false, 0, 0, 0, 0, 0);
-            assertTakerPosition(btcPoolId, a1, true, 3e20, 599144189016900000000000, 5976034232439324000, -35685215580000000000, 0);
+            assertTakerPosition(btcPoolId, a1, true, 3e20, 598955666026200000000000, 5976041773358952000, -35366075010000000000, 0);
             assertTakerPosition(btcPoolId, a2, false, 0, 0, 0, 0, 0);
             assertTakerPosition(btcPoolId, a2, true, 0, 0, 0, 0, 0);
-            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding, 2e20+poolFee-pnl-poolPnl);
-            assertPoolStatus(btcPoolId, true, 3e20, 599144189016900000000000, 5976034232439324000);
+            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding, 2e20+poolFee-pnl-poolPnl);
+            assertPoolStatus(btcPoolId, true, 3e20, 598955666026200000000000, 5976041773358952000);
             assertPoolStatus(btcPoolId, false, 0, 0, 0);
-            assertFundInfo(btcPoolId, 1625370138858921368080000, (2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding)*8/10, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding-usedValue);
-            assertTickStatus(btcPoolId, 797752038039312126801, 3e20);
-            assertMarketPrice(btcPoolId, 2058185e7);
+            assertFundInfo(btcPoolId, 1636536766089333235640000, (2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding)*8/10, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding-usedValue);
+            assertMEPoolStatus(btcPoolId, 803442118576585792467, 3e20);
+            assertMarketPrice(btcPoolId, 2057697e7);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), 0);
         }
 
@@ -936,22 +936,22 @@ contract TradeTest is Init {
         setPrice(ethId, 1995e8);
         vm.startPrank(a1);
         (marginBalance, , ) = markets.decreasePosition(btcPoolId, a1, true, 10e20);
-        poolFee += 23952806284050000/2;
-        pnl += -32403191565000000;
-        settledFunding += 549519957000000000;
+        poolFee += 23952661303410000/2;
+        pnl += -13913344095000000;
+        settledFunding += 544742131500000000;
         usedValue = 0;
         vm.stopPrank();
         {
-            vm.assertEq(marginBalance, 53701582);
+            vm.assertEq(marginBalance, 53934336);
             assertTakerPosition(btcPoolId, a1, false, 0, 0, 0, 0, 0);
             assertTakerPosition(btcPoolId, a1, true, 0, 0, 0, 0, 0);
             assertTakerPosition(btcPoolId, a2, false, 0, 0, 0, 0, 0);
             assertTakerPosition(btcPoolId, a2, true, 0, 0, 0, 0, 0);
-            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding, 2e20+poolFee-pnl-poolPnl);
+            assertGlobalPosition(btcPoolId, 2e20, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding, 2e20+poolFee-pnl-poolPnl);
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 0, 0, 0);
-            assertFundInfo(btcPoolId, 1630121335272577568080000, (2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding)*8/10, 2e20+140101227952e17+poolFee-pnl-140101228246e17+settledFunding-usedValue);
-            assertTickStatus(btcPoolId, 797752038039312126801, 0);
+            assertFundInfo(btcPoolId, 1641101820539306875640000, (2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding)*8/10, 2e20+140101227952e17+poolFee-pnl-140101227952e17-28e18+settledFunding-usedValue);
+            assertMEPoolStatus(btcPoolId, 803442118576585792467, 0);
             assertMarketPrice(btcPoolId, 1995e10);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), 0);
         }
@@ -960,7 +960,7 @@ contract TradeTest is Init {
         setPrice(ethId, 19905e8);
         (marginBalance, ) = pools.removeLiquidity(btcPoolId, address(this), 10000000e20, address(this));
         {
-            vm.assertEq(marginBalance, 2037651669);
+            vm.assertEq(marginBalance, 2051377275);
             assertTakerPosition(btcPoolId, a1, false, 0, 0, 0, 0, 0);
             assertTakerPosition(btcPoolId, a1, true, 0, 0, 0, 0, 0);
             assertTakerPosition(btcPoolId, a2, false, 0, 0, 0, 0, 0);
@@ -968,7 +968,7 @@ contract TradeTest is Init {
             assertGlobalPosition(btcPoolId, 0, 0, 0);
             assertPoolStatus(btcPoolId, true, 0, 0, 0);
             assertPoolStatus(btcPoolId, false, 0, 0, 0);
-            assertTickStatus(btcPoolId, 0, 0);
+            assertMEPoolStatus(btcPoolId, 0, 0);
             assertMarketPrice(btcPoolId, 19905e10);
             vm.assertEq(pools.unsettledFundingPayment(btcPoolId), 0);
 
@@ -1115,8 +1115,8 @@ contract TradeTest is Init {
         vm.assertLt(pos.unsettledFundingPayment, ufp+100, "TPUL");
     }
 
-    function assertTickStatus(bytes32 poolId, int256 makerAmount, int256 position) public view {
-        IMatchingEngine.TickStatus memory s = me.getStatus(poolId);
+    function assertMEPoolStatus(bytes32 poolId, int256 makerAmount, int256 position) public view {
+        IMatchingEngine.PoolStatus memory s = me.getStatus(poolId);
         vm.assertGe(s.makerAmount, makerAmount, "TSAG");
         vm.assertLt(s.makerAmount, makerAmount+1e10, "TSAL");
         vm.assertGe(s.position, position, "TSPG");
